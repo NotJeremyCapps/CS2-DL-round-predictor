@@ -1,0 +1,1 @@
+This directory is where the game demo data will be stored.
