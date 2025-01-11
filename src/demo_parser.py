@@ -1,11 +1,4 @@
-from demoparser2 import DemoParser
 from awpy import Demo
-
-class RoundTimes():
-    def __init__(self, startTick, endTick):
-        self.startTick = startTick
-        self.endTick = endTick
-    
 
 #spirit-vs-faze-m3-dust2.dem
 #test2.dem
