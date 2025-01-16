@@ -43,6 +43,7 @@ def main():
     #y represents what tick of the round we are on (not total ticks but tick of that specific round)
     game_movements = []
     game_pitch = []
+    game_yaw = []
 
     for x in range(len(parser.rounds)): #loops for every round played
         first_tick_of_round = round_starts[x]
@@ -51,6 +52,8 @@ def main():
         
         round_movements = []
         round_pitch = []
+        round_yaw = []
+        round_player = []
 
         for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
 
@@ -64,25 +67,54 @@ def main():
                 break
 
             all_players_locations = []
-            all_player_pitch = []
+            all_players_pitch = []
+            all_players_yaw = []
+            all_players_name = []
+
             for z in range(10):
 
                 player_location = [current_tick_info.X.loc[start_index_current_tick+z], current_tick_info.Y.loc[start_index_current_tick+z], current_tick_info.Z.loc[start_index_current_tick+z]]
                 player_pitch = [current_tick_info.pitch.loc[start_index_current_tick+z]]
+                player_yaw = [current_tick_info.yaw.loc[start_index_current_tick+z]]
+              
 
-                all_player_pitch.append(player_pitch)
+                all_players_pitch.append(player_pitch)
                 all_players_locations.append(player_location)
-                if(z==1):
-                    print(player_pitch)
+                all_players_yaw.append(player_yaw)
+
+
+
+                #double checks to make sure players for data frames are in the same order
+                player_name = [current_tick_info.name.loc[start_index_current_tick+z]]
+                #print(player_name)
+                all_players_name.append(player_name)
+
+                if(y==0 and z==9):
+                    print("Round number:", x,"\n")
+                    print(all_players_name)
+                elif(y > 0):
+                    if(round_player[y-1][z] != player_name):
+                        print("ERROR WITH SEQUENCE OF PLAYERS")
+                        print(round_player[y-1][z])
+                        print(player_name)
+                        exit(0)
+
+
+
+                #if(z==1):
+                #    print(player_yaw)
             
             round_movements.append(all_players_locations) # returns floats
-            round_pitch.append(all_player_pitch) #returns floats
+            round_pitch.append(all_players_pitch) #returns floats
+            round_yaw.append(all_players_yaw) #returns float
+            round_player.append(all_players_name)
 
 
         #if round has no bad frame data add to list
         try:
             game_movements.append(round_movements)
             game_pitch.append(round_pitch)
+            game_yaw.append(round_yaw)
         except:
             print("a round was invalid and can't be added to list")
             # does this to skip append if round was deleted
