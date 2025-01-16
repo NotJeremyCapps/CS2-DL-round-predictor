@@ -53,7 +53,10 @@ def main():
         round_movements = []
         round_pitch = []
         round_yaw = []
+
+        #for testing
         round_player = []
+        round_team_name = []
 
         for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
 
@@ -70,6 +73,8 @@ def main():
             all_players_pitch = []
             all_players_yaw = []
             all_players_name = []
+            all_team_name = []
+
 
             for z in range(10):
 
@@ -85,6 +90,7 @@ def main():
 
 
                 #double checks to make sure players for data frames are in the same order
+                
                 player_name = [current_tick_info.name.loc[start_index_current_tick+z]]
                 #print(player_name)
                 all_players_name.append(player_name)
@@ -98,16 +104,26 @@ def main():
                         print(round_player[y-1][z])
                         print(player_name)
                         exit(0)
-
-
-
+                
+            '''
+                #check teams
+                player_team = [current_tick_info.team_name.loc[start_index_current_tick+z]]
+                all_team_name.append(player_team)
+                if(z==9 and y>0): #only check once per tick
+                    print("Round number:", x,"\n")
+                    print(y)
+                    print(round_team_name[y-1])
+            '''
                 #if(z==1):
                 #    print(player_yaw)
             
             round_movements.append(all_players_locations) # returns floats
             round_pitch.append(all_players_pitch) #returns floats
             round_yaw.append(all_players_yaw) #returns float
+
+            #for testing
             round_player.append(all_players_name)
+            round_team_name.append(all_team_name)
 
 
         #if round has no bad frame data add to list
