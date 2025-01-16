@@ -37,17 +37,20 @@ def main():
        'yaw', 'Y', 'Z', 'game_time', 'tick', 'steamid', 'name', 'round'
     '''
 
+    #data type is dataframe which is in panda library
 
     #x represents current round -1
     #y represents what tick of the round we are on (not total ticks but tick of that specific round)
     game_movements = []
+    game_pitch = []
 
     for x in range(len(parser.rounds)): #loops for every round played
         first_tick_of_round = round_starts[x]
-        start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick
+        start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
         
         round_movements = []
+        round_pitch = []
 
         for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
 
@@ -61,17 +64,25 @@ def main():
                 break
 
             all_players_locations = []
+            all_player_pitch = []
             for z in range(10):
 
                 player_location = [current_tick_info.X.loc[start_index_current_tick+z], current_tick_info.Y.loc[start_index_current_tick+z], current_tick_info.Z.loc[start_index_current_tick+z]]
-            
+                player_pitch = [current_tick_info.pitch.loc[start_index_current_tick+z]]
+
+                all_player_pitch.append(player_pitch)
                 all_players_locations.append(player_location)
+                if(z==1):
+                    print(player_pitch)
             
-            round_movements.append(all_players_locations)
+            round_movements.append(all_players_locations) # returns floats
+            round_pitch.append(all_player_pitch) #returns floats
+
 
         #if round has no bad frame data add to list
         try:
             game_movements.append(round_movements)
+            game_pitch.append(round_pitch)
         except:
             print("a round was invalid and can't be added to list")
             # does this to skip append if round was deleted
@@ -80,6 +91,7 @@ def main():
     #each round in game_movements has a list of every tick that round
     #every tick has a list of all 10 players in the game
     #each of the 10 players in the tick has a list of their X,Y,Z positions
-    print(game_movements)
+
+    #print(game_movements[0])
 
 main()
