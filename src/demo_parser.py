@@ -42,23 +42,16 @@ def main():
 
     #x represents current round -1
     #y represents what tick of the round we are on (not total ticks but tick of that specific round)
-    #game_movements = []
-    #game_pitch = []
-    #game_yaw = []
+   
 
-    #player1 = player([])
-    game = []
+    game = [] #game to contain all the rounds
     for x in range(len(parser.rounds)): #loops for every round played
         game.append(Round())
         first_tick_of_round = round_starts[x]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
         
-        #round_movements = []
-        #round_pitch = []
-        #round_yaw = []
         players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
-        #round[x].init_players(players)
 
         #for testing
         #round_player = []
@@ -72,13 +65,11 @@ def main():
 
             if(current_tick_info.empty):
                 print("error parsing data for round ", x+1)
-                del game[len(game)-1]#round_movements  -- not needed bc it does not add it in the try/except section ACTUALLY IT MigHT NOT WORKKKK
+                del game[len(game)-1]
                 del players
                 break
 
-            #all_players_locations = []
-            #all_players_pitch = []
-            #all_players_yaw = []
+           
             #for testing
             #all_players_name = []
             #all_team_name = []
@@ -94,10 +85,7 @@ def main():
                 players[z].location.append(player_location)
                 players[z].pitch.append(player_pitch)
                 players[z].yaw.append(player_yaw)
-                #all_players_pitch.append(player_pitch)
-                #all_players_locations.append(player_location)
-                #all_players_yaw.append(player_yaw)
-
+                
 
 
 
@@ -127,12 +115,7 @@ def main():
                     print(y)
                     print(round_team_name[y-1])
                 '''
-                #if(z==0):
-                #    print(player_location)
-            
-            #round_movements.append(all_players_locations) # returns floats
-            #round_pitch.append(all_players_pitch) #returns floats
-            #round_yaw.append(all_players_yaw) #returns float
+           
 
             #for testing
             #round_player.append(all_players_name)
@@ -142,9 +125,7 @@ def main():
         #if round has no bad frame data add to list
         try:
             game[len(game)-1].players = players #add players stats for each round
-            #game_movements.append(round_movements)
-            #game_pitch.append(round_pitch)
-            #game_yaw.append(round_yaw)
+          
         except:
             print("a round was invalid and can't be added to list")
             # does this to skip append if round was deleted
@@ -154,9 +135,6 @@ def main():
     #every tick has a list of all 10 players in the game
     #each of the 10 players in the tick has a list of their X,Y,Z positions
 
-    #print(game_movements[0])
-    #print(players[0].location)
-    #print(game[0].players[0].location)
 
 
 main()
