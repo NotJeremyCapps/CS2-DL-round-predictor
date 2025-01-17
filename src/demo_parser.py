@@ -64,7 +64,7 @@ def main():
 
             if y % 10 == 0:
                 with open("tick_info.txt", "a") as f:
-                    f.write(str(parser.ticks.head(n=y+10)))
+                    f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
 
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
 

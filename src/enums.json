@@ -32,41 +32,77 @@
                 "TERRORISTS" : 0,
                 "CT" : 1
             },
-        "activeWeapon" :
-            {
-                "Knife" : 0,
-                "knife_karambit" : 1,
-                "USP-S" : 2,
-                "Glock-18": 3
-            },
         "primary_weapon" :
             {
-                "M4A1-S": 0, 
-                "MP9" : 1,
-                "SSG 08" : 2,
-                "MAC-10" : 3,
-                "AWP" : 4,
-                "Galil AR" : 5,
-                "M4A4" : 6,
-                "AUG" : 7
+                "Nova" : 0,
+                "XM1014" : 1,
+                "MAG-7" : 2,
+                "Sawed-Off" : 3,
+                "MP9" : 4,
+                "MAC-10" : 5,
+                "PP-Bizon" : 6,
+                "MP7" : 7,
+                "UMP-45" : 8,
+                "P90" : 9,
+                "MP5-SD" : 10,
+                "FAMAS" : 11,
+                "Galil AR" : 12,
+                "M4A4" : 13,
+                "M4A1-S" : 14,
+                "AK-47" : 15,
+                "AUG" : 16,
+                "SG 553" : 17,
+                "SSG 08" : 18,
+                "AWP" : 19,
+                "SCAR-20" : 20,
+                "G3SG1" : 21,
+                "M249" : 22,
+                "NEGEV" : 23
 
             },
         "secondary_weapon" :
             {
-                "Glock-18" : 0,
-                "USP-S": 1,
-                "Dual Berettas" : 2,
+                "P2000" : 0,
+                "USP-S" : 1,
+                "Glock-18" : 2,
                 "P250" : 3,
-                "Desert Eagle" : 4,
+                "Five-SeveN" : 4,
                 "Tec-9" : 5,
-                "Five-SeveN" : 6
+                "CZ75-Auto" : 6,
+                "Dual Berettas" : 7,
+                "Desert Eagle" : 8,
+                "R8 Revolver" : 9
             },
         "melee": 
-            {
-                "knife_karambit" : 0,
-                "knife_butterfly" : 1,
-                "knife_stiletto" : 2
+                ["knife",
+                "knife_t",
+                "bayonet",
+                "knife_butterfly",
+                "knife_falchion",
+                "knife_flip",
+                "knife_gut",
+                "knife_m9_bayonet",
+                "knife_push",
+                "knife_survival_bowie",
+                "knife_ursus",
+                "knife_gypsy_jackknife",
+                "knife_stiletto",
+                "knife_widowmaker",
+                "knife_css",
+                "knife_skeleton",
+                "knife_cord",
+                "knife_canis",
+                "knife_outdoor"]
 
+        ,
+        "grenades" : 
+            {
+                "Incendiary Grenade" : 0,
+                "Molotov" : 1,
+                "Smoke Grenade" : 2,
+                "High Explosive Grenade" : 3,
+                "Flashbang" : 4,
+                "Decoy Grenade" : 5
             }
     }
 
