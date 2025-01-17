@@ -1,0 +1,25 @@
+knife_karambit
+Glock-18
+knife_butterfly
+USP-S
+Flashbang
+Smoke Grenade
+High Explosive Grenade
+knife_stiletto
+Dual Berettas
+C4
+P250
+M4A1-S
+MP9
+Incendiary Grenade
+SSG 08
+AK-47
+Molotov
+MAC-10
+AWP
+Desert Eagle
+Galil AR
+Tec-9
+M4A4
+Five-SeveN
+AUG
