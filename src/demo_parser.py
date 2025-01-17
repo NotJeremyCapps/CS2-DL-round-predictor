@@ -45,6 +45,7 @@ def main():
    
 
     game = [] #game to contain all the rounds
+    possible_inventory_items = []
     for x in range(len(parser.rounds)): #loops for every round played
         game.append(Round())
         first_tick_of_round = round_starts[x]
@@ -59,32 +60,47 @@ def main():
 
         for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
 
-            start_index_current_tick = start_tick_round_index+(y*10)
+            start_idx_curr_tick = start_tick_round_index+(y*10)
 
-            current_tick_info = parser.ticks.loc[start_index_current_tick : start_index_current_tick+9] #gets 10 dataframes (1 for each player) for each tick
+            # with open("tick_info.txt", "a") as f:
+            #     f.write(str(parser.ticks.head(n=10)))
 
-            if(current_tick_info.empty):
+            curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
+
+            if(curr_tick_info.empty):
                 print("error parsing data for round ", x+1)
                 del game[len(game)-1]
                 del players
                 break
+
+
 
            
             #for testing
             #all_players_name = []
             #all_team_name = []
 
-
+            # Ten players in game
             for z in range(10):
 
-                player_location = [current_tick_info.X.loc[start_index_current_tick+z], current_tick_info.Y.loc[start_index_current_tick+z], current_tick_info.Z.loc[start_index_current_tick+z]]
-                player_pitch = [current_tick_info.pitch.loc[start_index_current_tick+z]]
-                player_yaw = [current_tick_info.yaw.loc[start_index_current_tick+z]]
-                player_health = [current_tick_info.health.loc[start_index_current_tick+z]]
-                player_HasHelmet = [current_tick_info.has_helmet.loc[start_index_current_tick+z]]
+                player_location = [curr_tick_info.X.loc[start_idx_curr_tick+z], curr_tick_info.Y.loc[start_idx_curr_tick+z], curr_tick_info.Z.loc[start_idx_curr_tick+z]]
+                player_pitch = [curr_tick_info.pitch.loc[start_idx_curr_tick+z]]
+                player_yaw = [curr_tick_info.yaw.loc[start_idx_curr_tick+z]]
+                player_health = [curr_tick_info.health.loc[start_idx_curr_tick+z]]
+                player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
+                
+                player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
+
+                for weap in player_inventory:
+                    if weap not in possible_inventory_items:
+                        possible_inventory_items.append(weap)
+                        with open("possible_weapons.txt", "a") as f:
+                            f.write(str(weap) + "\n")
+
+
               
                 #append individual player information for each tick
-                players[z].location.append(player_location)
+                players[z].postion.append(player_location)
                 players[z].pitch.append(player_pitch)
                 players[z].yaw.append(player_yaw)
                 players[z].health.append(player_health)

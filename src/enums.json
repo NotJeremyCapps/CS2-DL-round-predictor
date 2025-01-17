@@ -1,0 +1,76 @@
+
+{
+    "Match" : 
+    {
+
+        "roundEndReason" : 
+        {
+            "TargetBombed": "0", 
+            "VIPEscaped": "0", 
+            "VIPKilled": "0", 
+            "TerroristsEscaped": "0", 
+            "CTStoppedEscape": "0", 
+            "TerroristsStopped": "0", 
+            "BombDefused": "0", 
+            "CTWin": "0", 
+            "TerroristsWin": "0", 
+            "Draw": "0", 
+            "HostagesRescued": "0", 
+            "TargetSaved": "0", 
+            "HostagesNotRescued": "0", 
+            "TerroristsNotEscaped": "0", 
+            "VIPNotEscaped": "0", 
+            "GameStart": "0", 
+            "TerroristsSurrender": "0", 
+            "CTSurrender" : "0"
+        }
+
+    },
+    "Player" : {
+        "teamName" :
+            {
+                "TERRORISTS" : 0,
+                "CT" : 1
+            },
+        "activeWeapon" :
+            {
+                "Knife" : 0,
+                "knife_karambit" : 1,
+                "USP-S" : 2,
+                "Glock-18": 3
+            },
+        "primary_weapon" :
+            {
+                "M4A1-S": 0, 
+                "MP9" : 1,
+                "SSG 08" : 2,
+                "MAC-10" : 3,
+                "AWP" : 4,
+                "Galil AR" : 5,
+                "M4A4" : 6,
+                "AUG" : 7
+
+            },
+        "secondary_weapon" :
+            {
+                "Glock-18" : 0,
+                "USP-S": 1,
+                "Dual Berettas" : 2,
+                "P250" : 3,
+                "Desert Eagle" : 4,
+                "Tec-9" : 5,
+                "Five-SeveN" : 6,
+
+
+
+            },
+        "melee": 
+            {
+                "knife_karambit" : 0,
+                "knife_butterfly" : 1,
+                "knife_stiletto" : 2,
+
+            }
+    }
+
+}
