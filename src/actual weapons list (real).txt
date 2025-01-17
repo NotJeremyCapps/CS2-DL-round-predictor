@@ -1,0 +1,69 @@
+PRIMARY
+Nova
+XM1014
+MAG-7
+Sawed-Off
+MP9
+MAC-10
+PP-Bizon
+MP7
+UMP-45
+P90
+MP5-SD
+FAMAS
+Galil AR
+M4A4
+M4A1-S
+AK-47
+AUG
+SG 553
+SSG 08
+AWP
+SCAR-20
+G3SG1
+M249
+NEGEV
+
+PISTOLS
+P2000
+USP-S
+Glock-18
+P250
+Five-SeveN
+Tec-9
+CZ75-Auto
+Dual Berettas
+Desert Eagle
+R8 Revolver
+
+KNIVES
+knife
+knife_t
+bayonet
+knife_butterfly
+knife_falchion
+knife_flip
+knife_gut
+knife_m9_bayonet
+knife_push
+knife_survival_bowie
+knife_ursus
+knife_gypsy_jackknife
+knife_stiletto
+knife_widowmaker
+knife_css
+knife_skeleton
+knife_cord
+knife_canis
+knife_outdoor
+
+GRENADES
+Incendiary Grenade
+Molotov
+Smoke Grenade
+High Explosive Grenade
+Flashbang
+Decoy Grenade
+
+OTHER
+C4
