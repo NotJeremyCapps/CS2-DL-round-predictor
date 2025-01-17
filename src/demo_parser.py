@@ -1,4 +1,5 @@
 from awpy import Demo
+from player import Player
 
 #spirit-vs-faze-m3-dust2.dem
 #cloud9-vs-saw-m1-nuke.dem
@@ -45,6 +46,9 @@ def main():
     game_pitch = []
     game_yaw = []
 
+    players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
+    #player1 = player([])
+
     for x in range(len(parser.rounds)): #loops for every round played
         first_tick_of_round = round_starts[x]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
@@ -82,15 +86,17 @@ def main():
                 player_pitch = [current_tick_info.pitch.loc[start_index_current_tick+z]]
                 player_yaw = [current_tick_info.yaw.loc[start_index_current_tick+z]]
               
-
+                players[z].location.append(player_location)
+                
                 all_players_pitch.append(player_pitch)
                 all_players_locations.append(player_location)
                 all_players_yaw.append(player_yaw)
 
 
 
+
                 #double checks to make sure players for data frames are in the same order
-                
+                '''
                 player_name = [current_tick_info.name.loc[start_index_current_tick+z]]
                 #print(player_name)
                 all_players_name.append(player_name)
@@ -104,8 +110,9 @@ def main():
                         print(round_player[y-1][z])
                         print(player_name)
                         exit(0)
+                '''
                 
-            '''
+                '''
                 #check teams
                 player_team = [current_tick_info.team_name.loc[start_index_current_tick+z]]
                 all_team_name.append(player_team)
@@ -113,9 +120,9 @@ def main():
                     print("Round number:", x,"\n")
                     print(y)
                     print(round_team_name[y-1])
-            '''
-                #if(z==1):
-                #    print(player_yaw)
+                '''
+                if(z==0):
+                    print(player_location)
             
             round_movements.append(all_players_locations) # returns floats
             round_pitch.append(all_players_pitch) #returns floats
@@ -141,5 +148,6 @@ def main():
     #each of the 10 players in the tick has a list of their X,Y,Z positions
 
     #print(game_movements[0])
+    #print(players[0].location)
 
 main()
