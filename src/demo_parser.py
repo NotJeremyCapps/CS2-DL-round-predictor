@@ -42,27 +42,27 @@ def main():
 
     #x represents current round -1
     #y represents what tick of the round we are on (not total ticks but tick of that specific round)
-    game_movements = []
-    game_pitch = []
-    game_yaw = []
+    #game_movements = []
+    #game_pitch = []
+    #game_yaw = []
 
     #player1 = player([])
-    rounds = []
+    game = []
     for x in range(len(parser.rounds)): #loops for every round played
-        rounds.append(Round())
+        game.append(Round())
         first_tick_of_round = round_starts[x]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
         
-        round_movements = []
-        round_pitch = []
-        round_yaw = []
+        #round_movements = []
+        #round_pitch = []
+        #round_yaw = []
         players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
         #round[x].init_players(players)
 
         #for testing
-        round_player = []
-        round_team_name = []
+        #round_player = []
+        #round_team_name = []
 
         for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
 
@@ -72,14 +72,16 @@ def main():
 
             if(current_tick_info.empty):
                 print("error parsing data for round ", x+1)
-                del round_movements
+                del game[len(game)-1]#round_movements  -- not needed bc it does not add it in the try/except section ACTUALLY IT MigHT NOT WORKKKK
+                del players
                 break
 
             #all_players_locations = []
-            all_players_pitch = []
-            all_players_yaw = []
-            all_players_name = []
-            all_team_name = []
+            #all_players_pitch = []
+            #all_players_yaw = []
+            #for testing
+            #all_players_name = []
+            #all_team_name = []
 
 
             for z in range(10):
@@ -88,10 +90,13 @@ def main():
                 player_pitch = [current_tick_info.pitch.loc[start_index_current_tick+z]]
                 player_yaw = [current_tick_info.yaw.loc[start_index_current_tick+z]]
               
+                #append individual player information for each tick
                 players[z].location.append(player_location)
-                all_players_pitch.append(player_pitch)
+                players[z].pitch.append(player_pitch)
+                players[z].yaw.append(player_yaw)
+                #all_players_pitch.append(player_pitch)
                 #all_players_locations.append(player_location)
-                all_players_yaw.append(player_yaw)
+                #all_players_yaw.append(player_yaw)
 
 
 
@@ -126,20 +131,20 @@ def main():
                 #    print(player_location)
             
             #round_movements.append(all_players_locations) # returns floats
-            round_pitch.append(all_players_pitch) #returns floats
-            round_yaw.append(all_players_yaw) #returns float
+            #round_pitch.append(all_players_pitch) #returns floats
+            #round_yaw.append(all_players_yaw) #returns float
 
             #for testing
-            round_player.append(all_players_name)
-            round_team_name.append(all_team_name)
+            #round_player.append(all_players_name)
+            #round_team_name.append(all_team_name)
 
         
         #if round has no bad frame data add to list
         try:
-            rounds[x].players = players
+            game[len(game)-1].players = players #add players stats for each round
             #game_movements.append(round_movements)
-            game_pitch.append(round_pitch)
-            game_yaw.append(round_yaw)
+            #game_pitch.append(round_pitch)
+            #game_yaw.append(round_yaw)
         except:
             print("a round was invalid and can't be added to list")
             # does this to skip append if round was deleted
@@ -151,7 +156,7 @@ def main():
 
     #print(game_movements[0])
     #print(players[0].location)
-    print(rounds[0].players[0].location)
+    #print(game[0].players[0].location)
 
 
 main()
