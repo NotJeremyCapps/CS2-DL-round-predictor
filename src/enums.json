@@ -5,24 +5,24 @@
 
         "roundEndReason" : 
         {
-            "TargetBombed": "0", 
-            "VIPEscaped": "0", 
-            "VIPKilled": "0", 
-            "TerroristsEscaped": "0", 
-            "CTStoppedEscape": "0", 
-            "TerroristsStopped": "0", 
-            "BombDefused": "0", 
-            "CTWin": "0", 
-            "TerroristsWin": "0", 
-            "Draw": "0", 
-            "HostagesRescued": "0", 
-            "TargetSaved": "0", 
-            "HostagesNotRescued": "0", 
-            "TerroristsNotEscaped": "0", 
-            "VIPNotEscaped": "0", 
-            "GameStart": "0", 
-            "TerroristsSurrender": "0", 
-            "CTSurrender" : "0"
+            "TargetBombed": 0, 
+            "VIPEscaped": 0, 
+            "VIPKilled": 0, 
+            "TerroristsEscaped": 0, 
+            "CTStoppedEscape": 0, 
+            "TerroristsStopped": 0, 
+            "BombDefused": 0, 
+            "CTWin": 0, 
+            "TerroristsWin": 0, 
+            "Draw": 0, 
+            "HostagesRescued": 0, 
+            "TargetSaved": 0, 
+            "HostagesNotRescued": 0, 
+            "TerroristsNotEscaped": 0, 
+            "VIPNotEscaped": 0, 
+            "GameStart": 0, 
+            "TerroristsSurrender": 0, 
+            "CTSurrender" : 0
         }
 
     },
@@ -59,16 +59,13 @@
                 "P250" : 3,
                 "Desert Eagle" : 4,
                 "Tec-9" : 5,
-                "Five-SeveN" : 6,
-
-
-
+                "Five-SeveN" : 6
             },
         "melee": 
             {
                 "knife_karambit" : 0,
                 "knife_butterfly" : 1,
-                "knife_stiletto" : 2,
+                "knife_stiletto" : 2
 
             }
     }

@@ -62,8 +62,9 @@ def main():
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
-            # with open("tick_info.txt", "a") as f:
-            #     f.write(str(parser.ticks.head(n=10)))
+            if y % 10 == 0:
+                with open("tick_info.txt", "a") as f:
+                    f.write(str(parser.ticks.head(n=y+10)))
 
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
 
@@ -81,7 +82,9 @@ def main():
             #all_team_name = []
 
             # Ten players in game
-            for z in range(10):
+            for z in range(1, 10):
+
+                plyr_tick_data_idx = start_idx_curr_tick+z
 
                 player_location = [curr_tick_info.X.loc[start_idx_curr_tick+z], curr_tick_info.Y.loc[start_idx_curr_tick+z], curr_tick_info.Z.loc[start_idx_curr_tick+z]]
                 player_pitch = [curr_tick_info.pitch.loc[start_idx_curr_tick+z]]
@@ -89,6 +92,8 @@ def main():
                 player_health = [curr_tick_info.health.loc[start_idx_curr_tick+z]]
                 player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
                 
+                # players[z].load_tick_data(plyr_tick_data_idx, curr_tick_info)
+
                 player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
 
                 for weap in player_inventory:
