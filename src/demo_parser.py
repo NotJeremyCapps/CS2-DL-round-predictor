@@ -1,6 +1,6 @@
 from awpy import Demo
 from player import Player
-
+from round import Round
 #spirit-vs-faze-m3-dust2.dem
 #cloud9-vs-saw-m1-nuke.dem
 #test2.dem
@@ -46,10 +46,10 @@ def main():
     game_pitch = []
     game_yaw = []
 
-    players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
     #player1 = player([])
-
+    rounds = []
     for x in range(len(parser.rounds)): #loops for every round played
+        rounds.append(Round())
         first_tick_of_round = round_starts[x]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
@@ -57,6 +57,8 @@ def main():
         round_movements = []
         round_pitch = []
         round_yaw = []
+        players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
+        #round[x].init_players(players)
 
         #for testing
         round_player = []
@@ -73,7 +75,7 @@ def main():
                 del round_movements
                 break
 
-            all_players_locations = []
+            #all_players_locations = []
             all_players_pitch = []
             all_players_yaw = []
             all_players_name = []
@@ -87,9 +89,8 @@ def main():
                 player_yaw = [current_tick_info.yaw.loc[start_index_current_tick+z]]
               
                 players[z].location.append(player_location)
-                
                 all_players_pitch.append(player_pitch)
-                all_players_locations.append(player_location)
+                #all_players_locations.append(player_location)
                 all_players_yaw.append(player_yaw)
 
 
@@ -121,10 +122,10 @@ def main():
                     print(y)
                     print(round_team_name[y-1])
                 '''
-                if(z==0):
-                    print(player_location)
+                #if(z==0):
+                #    print(player_location)
             
-            round_movements.append(all_players_locations) # returns floats
+            #round_movements.append(all_players_locations) # returns floats
             round_pitch.append(all_players_pitch) #returns floats
             round_yaw.append(all_players_yaw) #returns float
 
@@ -132,10 +133,11 @@ def main():
             round_player.append(all_players_name)
             round_team_name.append(all_team_name)
 
-
+        
         #if round has no bad frame data add to list
         try:
-            game_movements.append(round_movements)
+            rounds[x].players = players
+            #game_movements.append(round_movements)
             game_pitch.append(round_pitch)
             game_yaw.append(round_yaw)
         except:
@@ -149,5 +151,7 @@ def main():
 
     #print(game_movements[0])
     #print(players[0].location)
+    print(rounds[0].players[0].location)
+
 
 main()
