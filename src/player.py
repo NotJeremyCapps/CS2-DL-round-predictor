@@ -4,3 +4,6 @@ class Player:
         self.location = []
         self.pitch = []
         self.yaw = []
+        self.health = []
+        self.HasHelmet = []
+        self.HasArmor = []

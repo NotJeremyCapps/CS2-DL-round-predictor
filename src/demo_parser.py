@@ -80,12 +80,20 @@ def main():
                 player_location = [current_tick_info.X.loc[start_index_current_tick+z], current_tick_info.Y.loc[start_index_current_tick+z], current_tick_info.Z.loc[start_index_current_tick+z]]
                 player_pitch = [current_tick_info.pitch.loc[start_index_current_tick+z]]
                 player_yaw = [current_tick_info.yaw.loc[start_index_current_tick+z]]
+                player_health = [current_tick_info.health.loc[start_index_current_tick+z]]
+                player_HasHelmet = [current_tick_info.has_helmet.loc[start_index_current_tick+z]]
               
                 #append individual player information for each tick
                 players[z].location.append(player_location)
                 players[z].pitch.append(player_pitch)
                 players[z].yaw.append(player_yaw)
-                
+                players[z].health.append(player_health)
+
+                if(player_HasHelmet[0] == False):
+                    players[z].HasHelmet.append(0)
+                else:
+                    players[z].HasHelmet.append(1)
+
 
 
 
