@@ -1,13 +1,21 @@
 from awpy import Demo
 from player import Player
 from round import Round
+import os
+
+
+
+PATH = "../game_demos/"
 #spirit-vs-faze-m3-dust2.dem
 #cloud9-vs-saw-m1-nuke.dem
 #test2.dem
 
 def main():
 
-    parser = Demo("../game_demos/spirit-vs-faze-m3-dust2.dem")
+    list_of_demo_names = [x for x in os.listdir(PATH) if x.endswith(".dem")]
+
+
+    parser = Demo(PATH + list_of_demo_names[0])
 
     map = parser.header["map_name"]
     print("Map: ", map)
