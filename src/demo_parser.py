@@ -51,20 +51,22 @@ def main():
         first_tick_of_round = round_starts[x]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
-        
-        players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
 
+
+        players = []
+        for i in range(0,10):
+            players.append(Player(name=f"player{i}", enums_path = "enums.json"))
         #for testing
         #round_player = []
         #round_team_name = []
 
         for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
-
+            
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
-            if y % 10 == 0:
-                with open("tick_info.txt", "a") as f:
-                    f.write(str(parser.ticks.head(n=y+10)))
+            #if y % 10 == 0:
+            #    with open("tick_info.txt", "a") as f:
+            #        f.write(str(parser.ticks.head(n=y+10)))
 
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
 
@@ -82,40 +84,24 @@ def main():
             #all_team_name = []
 
             # Ten players in game
-            for z in range(1, 10):
+            for z in range(0, 10):
+                players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
+                #plyr_tick_data_idx = start_idx_curr_tick+z
 
-                plyr_tick_data_idx = start_idx_curr_tick+z
-
-                player_location = [curr_tick_info.X.loc[start_idx_curr_tick+z], curr_tick_info.Y.loc[start_idx_curr_tick+z], curr_tick_info.Z.loc[start_idx_curr_tick+z]]
-                player_pitch = [curr_tick_info.pitch.loc[start_idx_curr_tick+z]]
-                player_yaw = [curr_tick_info.yaw.loc[start_idx_curr_tick+z]]
-                player_health = [curr_tick_info.health.loc[start_idx_curr_tick+z]]
-                player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
-                
                 # players[z].load_tick_data(plyr_tick_data_idx, curr_tick_info)
 
-                player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
+                #player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
 
+                #printing weapons
+                '''
                 for weap in player_inventory:
                     if weap not in possible_inventory_items:
                         possible_inventory_items.append(weap)
                         with open("possible_weapons.txt", "a") as f:
                             f.write(str(weap) + "\n")
-
+                '''
 
               
-                #append individual player information for each tick
-                players[z].postion.append(player_location)
-                players[z].pitch.append(player_pitch)
-                players[z].yaw.append(player_yaw)
-                players[z].health.append(player_health)
-
-                if(player_HasHelmet[0] == False):
-                    players[z].HasHelmet.append(0)
-                else:
-                    players[z].HasHelmet.append(1)
-
-
 
 
                 #double checks to make sure players for data frames are in the same order
@@ -150,7 +136,7 @@ def main():
             #round_player.append(all_players_name)
             #round_team_name.append(all_team_name)
 
-        
+        players[3].print_stats()
         #if round has no bad frame data add to list
         try:
             game[len(game)-1].players = players #add players stats for each round
