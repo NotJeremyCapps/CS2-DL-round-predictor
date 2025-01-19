@@ -67,6 +67,16 @@
                 "knife_butterfly" : 1,
                 "knife_stiletto" : 2
 
+            },
+        
+        "Grenade":
+            {   
+                "Smoke Grenade": 0,
+                "Flashbang": 1,
+                "High Explosive Grenade": 2,
+                "Incendiary Grenade": 3,
+                "Molotov": 4
+            
             }
     }
 
