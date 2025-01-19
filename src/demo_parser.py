@@ -69,6 +69,8 @@ def main():
             #        f.write(str(parser.ticks.head(n=y+10)))
 
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
+            #curr_frame_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9]
+            #print(curr_tick_info.dtype())
 
             if(curr_tick_info.empty):
                 print("error parsing data for round ", x+1)
@@ -136,9 +138,9 @@ def main():
             #round_player.append(all_players_name)
             #round_team_name.append(all_team_name)
 
-        players[3].print_stats()
         #if round has no bad frame data add to list
         try:
+            players[6].print_stats()
             game[len(game)-1].players = players #add players stats for each round
           
         except:

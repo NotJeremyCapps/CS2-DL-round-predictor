@@ -12,10 +12,13 @@ class Player:
         self.yaw = []
         self.health = []
         self.HasHelmet = []
-        self.HasArmor = []#need to fill
+        self.HasArmor = []
+        self.FlashDuration = []
+        self.HasDefuser = []
 
         self.primary_weapon = []
         self.secondary_weapon = []
+        self.active_weapon = []#not sure how to fill
 
         self.team_name = None
 
@@ -23,18 +26,36 @@ class Player:
         self.enums = json.loads(emun_file.read())
         #self.enums = None
 
+#tick idx is data frame, tick data is eata of tick
     def load_tick_data(self, tick_idx: int, tick_data, z):
+        if(self.team_name == None):
+            self.team_name = tick_data.team_name.loc[tick_idx+z]
 
         self.position.append([tick_data.X.loc[tick_idx+z], tick_data.Y.loc[tick_idx+z], tick_data.Z.loc[tick_idx+z]])
         self.pitch.append([tick_data.pitch.loc[tick_idx+z]])
         self.yaw.append(([tick_data.yaw.loc[tick_idx+z]]))
         self.health.append([tick_data.health.loc[tick_idx+z]])
+        self.FlashDuration.append([tick_data.flash_duration.loc[tick_idx + z]])
+
+        Defuser = [tick_data.has_defuser[tick_idx+z]]
         Helmet= [tick_data.has_helmet.loc[tick_idx+z]]
-        
+        armorvalue = ([tick_data.armor_value.loc[tick_idx+z]])
+
         if(Helmet[0] == False):
             self.HasHelmet.append(0) 
         else:
             self.HasHelmet.append(1)
+
+        if(armorvalue[0] == 0):
+            self.HasArmor.append(0)
+        else:
+            self.HasArmor.append(1)
+
+        if(Defuser[0] == False):
+            self.HasDefuser.append(0) 
+        else:
+            self.HasDefuser.append(1)
+
 
   #        player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
         
@@ -50,8 +71,20 @@ class Player:
                 #This should be a melee weapon if isnt in first 2 conditions
                 pass
         
+        '''
+        #enumerate active weapon
+        for weap in tick_data.inventory.loc[tick_idx+z]:
+            if weap in self.enums["Player"]["primary_weapon"]:
+                self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
+'''
+
+
+
+
     def print_stats(self):
         print("Player:", self.player_name)
+        print("Team Name:", self.team_name)
+        '''
         print("Position:",self.position)
         print("Pitch:", self.pitch)
         print("Yaw:", self.yaw)
@@ -60,4 +93,8 @@ class Player:
         print("HasArmor:", self.HasArmor)
         print("PrimaryWeapon", self.primary_weapon)
         print("SecondaryWeapon",self.secondary_weapon)
+        print("HasArmor:", self.HasArmor)
+        print("FlashDuration:",self.FlashDuration)
+        print("HasDefuser", self.HasDefuser)
+        '''
     
