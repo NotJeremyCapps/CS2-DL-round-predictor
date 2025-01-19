@@ -90,7 +90,7 @@ def main():
             #all_team_name = []
 
             # Ten players in game
-            for z in range(1, 10):
+            for z in range(0, 10):
 
                 plyr_tick_data_idx = start_idx_curr_tick+z
 
