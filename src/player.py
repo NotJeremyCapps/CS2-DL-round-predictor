@@ -14,12 +14,14 @@ class Player:
         self.HasHelmet = []
         self.HasArmor = []
         self.FlashDuration = []
+        self.CDFlashDuration = [] #Countdown flash duration
         self.HasDefuser = []
         self.grenade_count = []
 
         self.primary_weapon = []
         self.secondary_weapon = []
         self.active_weapon = []#not sure how to fill
+        self.HasBomb = []
 
         self.team_name = None
 
@@ -60,8 +62,9 @@ class Player:
 
   #        player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
         
+        self.HasBomb.append(0)
         grenade_counter = 0
-        # Enumerate primary and secondary weapons
+        # Enumerate primary, secondary weapons, grenade, and has_bomb based on player inventory
         for weap in tick_data.inventory.loc[tick_idx+z]:
             if weap in self.enums["Player"]["primary_weapon"]:
                 self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
@@ -71,6 +74,8 @@ class Player:
 
             elif weap in self.enums["Player"]["Grenade"]:
                 grenade_counter += 1
+            elif (weap == "C4"):#bomb
+                self.HasBomb[-1] = 1#assumes only one bomb on all players at a time.
             else: 
                 #This should be a melee weapon if isnt in first 2 conditions
                 pass
@@ -88,15 +93,11 @@ class Player:
                 self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
         '''
 
-
     '''
-        def timer(self, decrement_list):
-            prev_val = decrement_list[len(decrement_list)-2]
-            val = decrement_list[len(decrement_list)-1]
-            if(val == 0):
-                pass
-            elif(prev_val ==):
-    '''
+        def timer(self, initial_list):
+            if(initial_list[-2] != 0 and initial_list[-1] == 0 )
+                while(initial_list[z] == val )
+     '''       
 
 
 
@@ -117,4 +118,5 @@ class Player:
         print("HasDefuser:", self.HasDefuser)
         
         print("Grenade Counter:", self.grenade_count)
+        print("HasBomb:", self.HasBomb)
     
