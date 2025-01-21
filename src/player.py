@@ -14,7 +14,6 @@ class Player:
         self.HasHelmet = []
         self.HasArmor = []
         self.Flash = []
-        self.CDFlashDuration = [] #Countdown flash duration
         self.HasDefuser = []
         self.grenade_count = []
 
@@ -35,9 +34,9 @@ class Player:
             self.team_name = tick_data.team_name.loc[tick_idx+z]
 
         self.position.append([tick_data.X.loc[tick_idx+z], tick_data.Y.loc[tick_idx+z], tick_data.Z.loc[tick_idx+z]])
-        self.pitch.append([tick_data.pitch.loc[tick_idx+z]])
-        self.yaw.append(([tick_data.yaw.loc[tick_idx+z]]))
-        self.health.append([tick_data.health.loc[tick_idx+z]])
+        self.pitch.append([tick_data.pitch.loc[tick_idx+z]][0])
+        self.yaw.append(([tick_data.yaw.loc[tick_idx+z]][0]))
+        self.health.append([tick_data.health.loc[tick_idx+z]][0])
 
 
         
@@ -92,39 +91,29 @@ class Player:
         self.grenade_count.append(grenade_counter)
       
         
-        
-        '''
-        #enumerate active weapon
-        for weap in tick_data.inventory.loc[tick_idx+z]:
-            if weap in self.enums["Player"]["primary_weapon"]:
-                self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
-        '''
-
-    '''
-        def timer(self, initial_list):
-            if(initial_list[-2] != 0 and initial_list[-1] == 0 )
-                while(initial_list[z] == val )
-     '''       
-
 
 
     def print_stats(self):
-        '''
+        
+        ''' 
         print("Player:", self.player_name)
         print("Team Name:", self.team_name)
         print("Position:",self.position)
         print("Pitch:", self.pitch)
-        print("Yaw:", self.yaw)
+        
         print("Health:", self.health)
         print("HasHelmet:", self.HasHelmet)
         print("HasArmor:", self.HasArmor)
         print("PrimaryWeapon", self.primary_weapon)
         print("SecondaryWeapon",self.secondary_weapon)
         print("HasArmor:", self.HasArmor)
-        '''
-        print("Flash:",self.Flash)
-        #print("HasDefuser:", self.HasDefuser)
         
-        #print("Grenade Counter:", self.grenade_count)
-        #print("HasBomb:", self.HasBomb)
+        print("Flash:",self.Flash)
+        print("HasDefuser:", self.HasDefuser)
+        
+        print("Grenade Counter:", self.grenade_count)
+        print("HasBomb:", self.HasBomb)
+        '''
+        print("Yaw:", self.yaw)
+
     

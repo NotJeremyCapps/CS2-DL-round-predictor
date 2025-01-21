@@ -15,11 +15,16 @@ def main():
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
     round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
 
+
     print("round   start_tick   end_tick")
     for x in range(len(parser.rounds)):
         print(x+1, "      ", round_starts[x], "      ", round_ends[x])
 
-
+    '''
+    for key, value in parser.events():
+        file = open('output.txt', 'w')
+        file.write(key, ":", value)
+    '''
 
     '''
     elements for parser.rounds
