@@ -12,20 +12,27 @@ PATH = "../game_demos/"
 
 def main():
 
-    list_of_demo_names = [x for x in os.listdir(PATH) if x.endswith(".dem")]
+    loaded_maps = {}
 
+    list_of_demo_names = [x for x in os.listdir(PATH) if x.endswith(".dem")]
 
     parser = Demo(PATH + list_of_demo_names[0])
 
-    map = parser.header["map_name"]
-    print("Map: ", map)
+    map_name = parser.header["map_name"]
+    print("Map: ", map_name)
 
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
     round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
 
-    print("round   start_tick   end_tick")
-    for x in range(len(parser.rounds)):
-        print(x+1, "      ", round_starts[x], "      ", round_ends[x])
+
+    # print("round   start_tick   end_tick")
+    # for round in range(len(parser.rounds)):
+    #     print(round+1, "      ", round_starts[round], "      ", round_ends[round])
+
+    #     with open("round_info.txt", "a") as f:
+    #         f.write(str(parser.rounds[round]))
+
+        
 
 
 
@@ -51,12 +58,38 @@ def main():
     #x represents current round -1
     #y represents what tick of the round we are on (not total ticks but tick of that specific round)
    
+    # Update loaded maps counting dictionary
+    if map_name in loaded_maps.keys():
+        loaded_maps[map_name] += 1
+    else:
+        loaded_maps[map_name] = 0 # Counter is indexed from 0
 
-    game = [] #game to contain all the rounds
-    possible_inventory_items = []
-    for x in range(len(parser.rounds)): #loops for every round played
-        game.append(Round())
-        first_tick_of_round = round_starts[x]
+    match_title = f"{map_name}_{loaded_maps[map_name]}" #Format name of Match
+    
+
+
+    game:list[Round] = [] #game to contain all the rounds
+
+    for n in range(len(parser.rounds)):
+        round_title = f"{match_title}_round_{n}"
+
+        current_round = Round(round_title=round_title, 
+                              round_num=n,
+                              map_name=map_name,
+                              demo_data_root=PATH, 
+                              enums_path="enums.json")
+        game.append(current_round)
+
+    # possible_inventory_items = []
+    for round_num in range(len(parser.rounds)): #loops for every round played
+        # game.append(Round())
+        
+
+        print(f"Type: {parser.rounds.dtypes}")
+        game[round_num].load_round_data(round_dict=parser.rounds)
+        game[round_num].write_round_to_csv()
+
+        first_tick_of_round = round_starts[round_num]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
         
@@ -66,7 +99,7 @@ def main():
         #round_player = []
         #round_team_name = []
 
-        for y in range(len(range(round_starts[x], round_ends[x] + 1))): #loops for every tick in that round
+        for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
@@ -77,7 +110,7 @@ def main():
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
 
             if(curr_tick_info.empty):
-                print("error parsing data for round ", x+1)
+                print("error parsing data for round ", round_num+1)
                 del game[len(game)-1]
                 del players
                 break
@@ -104,11 +137,11 @@ def main():
 
                 player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
 
-                for weap in player_inventory:
-                    if weap not in possible_inventory_items:
-                        possible_inventory_items.append(weap)
-                        with open("possible_weapons.txt", "a") as f:
-                            f.write(str(weap) + "\n")
+                # for weap in player_inventory:
+                #     if weap not in possible_inventory_items:
+                #         possible_inventory_items.append(weap)
+                #         with open("possible_weapons.txt", "a") as f:
+                #             f.write(str(weap) + "\n")
 
 
               

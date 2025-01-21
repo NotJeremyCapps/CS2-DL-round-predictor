@@ -3,9 +3,11 @@ import json
 import pandas as pd
 
 class Round:
-    def __init__(self, match_title="",demo_data_root="../game_demos", enums_path:str="enums.json"):
+    def __init__(self, round_title="",round_num=0, map_name=None, demo_data_root="../game_demos", enums_path:str="enums.json"):
 
-        self.round_title = match_title
+        self.round_num=round_num
+        self.round_title = round_title
+        self.map_name = map_name
 
         self.start_tick = None
         self.end_tick = None
@@ -18,7 +20,9 @@ class Round:
         self.tick_idx = 0
         self.bomb_timer_left = 0
 
-        self.outcome = None
+        self.winner = None
+        self.bomb_plant_time = None
+        self.reason = None
 
         self.df = pd.DataFrame()
 
@@ -31,29 +35,58 @@ class Round:
         self.enums = json.loads(emun_file.read())
 
 
-    def load_tick_data(self, tick_idx: int, tick_data):
-        pass
+    def load_round_data(self, round_dict: dict):
+
+        print(f"Winner: {round_dict['winner'][self.round_num]}")
+        self.winner = round_dict['winner'][self.round_num]
+
+        if str(round_dict['bomb_plant'][self.round_num]) != "<NA>":
+            self.bomb_plant_time = int(round_dict['bomb_plant'][self.round_num])
+        else:
+            self.bomb_plant_time = None
+        
+        print(f"Reason: {round_dict['reason'][self.round_num]}")
+        self.reason = round_dict['reason'][self.round_num]
+
+        self.df.loc[0, 'winner'] = round_dict['winner'][self.round_num]
+        self.df.loc[0, 'reason'] = round_dict['reason'][self.round_num]
+        self.df.loc[0, 'bomb_plant'] = self.bomb_plant_time
+
+        with open("round_class_info.txt", "a") as f:
+            f.write(str(round_dict))
+
+
 
     def load_player_tick_data(self, players):
 
         for player in players:
 
             # Load postion of players
-            self.df[f"{player.player_name}_X"] = pd.concat([self.df[f"{player.player_name}_X"], pd.Series([player.position[0] for x in player.postion])], ignore_index=True)
-            self.df[f"{player.player_name}_Y"] = pd.concat([self.df[f"{player.player_name}_X"], pd.Series([player.position[0] for x in player.postion])], ignore_index=True)
-            self.df[f"{player.player_name}_Z"] = pd.concat([self.df[f"{player.player_name}_X"], pd.Series([player.position[0] for x in player.postion])], ignore_index=True)
+            self.df[f"{player.player_name}_x"] = pd.concat([self.df[f"{player.player_name}_x"], pd.Series([pos[0] for pos in player.postion])], ignore_index=True)
+            self.df[f"{player.player_name}_y"] = pd.concat([self.df[f"{player.player_name}_y"], pd.Series([pos[1] for pos in player.postion])], ignore_index=True)
+            self.df[f"{player.player_name}_z"] = pd.concat([self.df[f"{player.player_name}_z"], pd.Series([pos[2] for pos in player.postion])], ignore_index=True)
 
-            
+            # Extract Yaw and Pitch
+            self.df[f"{player.player_name}_pitch"] = pd.concat(self.df[f"{player.player_name}_pitch"], pd.Series([pitch for pitch in player.pitch]))
+            self.df[f"{player.player_name}_yaw"] = pd.concat(self.df[f"{player.player_name}_yaw"], pd.Series([yaw for yaw in player.yaw]))
 
+            self.df[f"{player.player_name}_hp"] = pd.concat(self.df[f"{player.player_name}_hp"], pd.Series([health for health in player.health]))
+            self.df[f"{player.player_name}_flash_dur"] = pd.concat(self.df[f"{player.player_name}_flash_dur"], pd.Series([FlashDuration for FlashDuration in player.FlashDuration]))
 
+            # Inventory
+            self.df[f"{player.player_name}_has_helm"] = pd.concat(self.df[f"{player.player_name}_has_helm"], pd.Series([HasHelmet for HasHelmet in player.HasHelmet]))
+            self.df[f"{player.player_name}_has_armor"] = pd.concat(self.df[f"{player.player_name}_has_armor"], pd.Series([HasArmor for HasArmor in player.HasArmor]))
+
+            self.df[f"{player.player_name}_has_defuse"] = pd.concat(self.df[f"{player.player_name}_has_defuse"], pd.Series([HasDefuser for HasDefuser in player.HasDefuser]))
+            self.df[f"{player.player_name}_primary"] = pd.concat(self.df[f"{player.player_name}_primary"], pd.Series([primary_weapon for primary_weapon in player.primary_weapon]))
+            self.df[f"{player.player_name}_secondary"] = pd.concat(self.df[f"{player.player_name}_secondary"], pd.Series([secondary_weapon for secondary_weapon in player.secondary_weapon]))
+
+            self.df[f"{player.player_name}_grenades"] = pd.concat(self.df[f"{player.player_name}_grenades"], pd.Series([grenade_count for grenade_count in player.grenade_count]))
+            self.df[f"{player.player_name}_grenades"] = pd.concat(self.df[f"{player.player_name}_grenades"], pd.Series([grenade_count for grenade_count in player.grenade_count]))
 
         
 
     def write_round_to_csv(self):
 
-
-        self.df['Outcome'] = self.outcome
-
-
-        self.df.to_csv(index=True)
-        pass
+        self.df.to_csv(self.csv_file, index=True)
+        
