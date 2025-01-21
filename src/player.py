@@ -13,8 +13,7 @@ class Player:
         self.health = []
         self.HasHelmet = []
         self.HasArmor = []
-        self.FlashDuration = []
-        self.CDFlashDuration = [] #Countdown flash duration
+        self.Flash = []
         self.HasDefuser = []
         self.grenade_count = []
 
@@ -35,15 +34,22 @@ class Player:
             self.team_name = tick_data.team_name.loc[tick_idx+z]
 
         self.position.append([tick_data.X.loc[tick_idx+z], tick_data.Y.loc[tick_idx+z], tick_data.Z.loc[tick_idx+z]])
-        self.pitch.append([tick_data.pitch.loc[tick_idx+z]])
-        self.yaw.append(([tick_data.yaw.loc[tick_idx+z]]))
-        self.health.append([tick_data.health.loc[tick_idx+z]])
-        self.FlashDuration.append([tick_data.flash_duration.loc[tick_idx + z]])
+        self.pitch.append([tick_data.pitch.loc[tick_idx+z]][0])
+        self.yaw.append(([tick_data.yaw.loc[tick_idx+z]][0]))
+        self.health.append([tick_data.health.loc[tick_idx+z]][0])
 
+
+        
+        Flash_Duration = [tick_data.flash_duration.loc[tick_idx + z]]
         Defuser = [tick_data.has_defuser[tick_idx+z]]
         Helmet= [tick_data.has_helmet.loc[tick_idx+z]]
         armorvalue = ([tick_data.armor_value.loc[tick_idx+z]])
 
+
+        if(Flash_Duration[0] > 0):
+            self.Flash.append(1)
+        else:
+            self.Flash.append(0)
         if(Helmet[0] == False):
             self.HasHelmet.append(0) 
         else:
@@ -72,7 +78,7 @@ class Player:
             elif weap in self.enums["Player"]["secondary_weapon"]:
                 self.secondary_weapon.append(self.enums["Player"]["secondary_weapon"][weap])
 
-            elif weap in self.enums["Player"]["Grenade"]:
+            elif weap in self.enums["Player"]["grenade"]:
                 grenade_counter += 1
             elif (weap == "C4"):#bomb
                 self.HasBomb[-1] = 1#assumes only one bomb on all players at a time.
@@ -85,38 +91,29 @@ class Player:
         self.grenade_count.append(grenade_counter)
       
         
-        
-        '''
-        #enumerate active weapon
-        for weap in tick_data.inventory.loc[tick_idx+z]:
-            if weap in self.enums["Player"]["primary_weapon"]:
-                self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
-        '''
-
-    '''
-        def timer(self, initial_list):
-            if(initial_list[-2] != 0 and initial_list[-1] == 0 )
-                while(initial_list[z] == val )
-     '''       
-
 
 
     def print_stats(self):
         
+        ''' 
         print("Player:", self.player_name)
         print("Team Name:", self.team_name)
         print("Position:",self.position)
         print("Pitch:", self.pitch)
-        print("Yaw:", self.yaw)
+        
         print("Health:", self.health)
         print("HasHelmet:", self.HasHelmet)
         print("HasArmor:", self.HasArmor)
         print("PrimaryWeapon", self.primary_weapon)
         print("SecondaryWeapon",self.secondary_weapon)
         print("HasArmor:", self.HasArmor)
-        print("FlashDuration:",self.FlashDuration)
+        
+        print("Flash:",self.Flash)
         print("HasDefuser:", self.HasDefuser)
         
         print("Grenade Counter:", self.grenade_count)
         print("HasBomb:", self.HasBomb)
+        '''
+        print("Yaw:", self.yaw)
+
     

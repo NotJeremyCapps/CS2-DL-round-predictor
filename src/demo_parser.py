@@ -18,6 +18,9 @@ def main():
 
     parser = Demo(PATH + list_of_demo_names[0])
 
+    # with open("player_state_info.txt", "a") as f:
+    #     f.write(str(parser.ticks[["player_state"]].sample(n=10)))
+
     map_name = parser.header["map_name"]
     print("Map: ", map_name)
 
@@ -85,21 +88,27 @@ def main():
         # game.append(Round())
         
 
-        print(f"Type: {parser.rounds.dtypes}")
-        game[round_num].load_round_data(round_dict=parser.rounds)
-        game[round_num].write_round_to_csv()
 
         first_tick_of_round = round_starts[round_num]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
         
-        players = [Player(), Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player(),Player()]
+        players:list[Player] = []
+        for i in range(0,10):
+            players.append(Player(name=f"player{i}", enums_path = "enums.json"))
+        
+        # init headers for each player in round dataframe
+        game[round_num].init_headers(players)
 
         #for testing
         #round_player = []
         #round_team_name = []
 
+
+
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
+
+            game[round_num].tick_idxs.append(y)
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
@@ -115,8 +124,6 @@ def main():
                 del players
                 break
 
-
-
            
             #for testing
             #all_players_name = []
@@ -125,17 +132,19 @@ def main():
             # Ten players in game
             for z in range(0, 10):
 
-                plyr_tick_data_idx = start_idx_curr_tick+z
+                players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
 
-                player_location = [curr_tick_info.X.loc[start_idx_curr_tick+z], curr_tick_info.Y.loc[start_idx_curr_tick+z], curr_tick_info.Z.loc[start_idx_curr_tick+z]]
-                player_pitch = [curr_tick_info.pitch.loc[start_idx_curr_tick+z]]
-                player_yaw = [curr_tick_info.yaw.loc[start_idx_curr_tick+z]]
-                player_health = [curr_tick_info.health.loc[start_idx_curr_tick+z]]
-                player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
+                # plyr_tick_data_idx = start_idx_curr_tick+z
+
+                # player_location = [curr_tick_info.X.loc[start_idx_curr_tick+z], curr_tick_info.Y.loc[start_idx_curr_tick+z], curr_tick_info.Z.loc[start_idx_curr_tick+z]]
+                # player_pitch = [curr_tick_info.pitch.loc[start_idx_curr_tick+z]]
+                # player_yaw = [curr_tick_info.yaw.loc[start_idx_curr_tick+z]]
+                # player_health = [curr_tick_info.health.loc[start_idx_curr_tick+z]]
+                # player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
                 
                 # players[z].load_tick_data(plyr_tick_data_idx, curr_tick_info)
 
-                player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
+                # player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
 
                 # for weap in player_inventory:
                 #     if weap not in possible_inventory_items:
@@ -146,15 +155,15 @@ def main():
 
               
                 #append individual player information for each tick
-                players[z].postion.append(player_location)
-                players[z].pitch.append(player_pitch)
-                players[z].yaw.append(player_yaw)
-                players[z].health.append(player_health)
+                # players[z].postion.append(player_location)
+                # players[z].pitch.append(player_pitch)
+                # players[z].yaw.append(player_yaw)
+                # players[z].health.append(player_health)
 
-                if(player_HasHelmet[0] == False):
-                    players[z].HasHelmet.append(0)
-                else:
-                    players[z].HasHelmet.append(1)
+                # if(player_HasHelmet[0] == False):
+                #     players[z].HasHelmet.append(0)
+                # else:
+                #     players[z].HasHelmet.append(1)
 
 
 
@@ -191,13 +200,17 @@ def main():
             #round_player.append(all_players_name)
             #round_team_name.append(all_team_name)
 
+        game[round_num].load_player_tick_data(players=players)
+        game[round_num].load_round_data(round_dict=parser.rounds)
+        game[round_num].write_round_to_csv()
+
         
         #if round has no bad frame data add to list
-        try:
-            game[len(game)-1].players = players #add players stats for each round
+        # try:
+        #     game[len(game)-1].players = players #add players stats for each round
           
-        except:
-            print("a round was invalid and can't be added to list")
+        # except:
+        #     print("a round was invalid and can't be added to list")
             # does this to skip append if round was deleted
 
     #game_movements is a list of each valid round
