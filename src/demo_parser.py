@@ -141,7 +141,7 @@ def main():
 
         #if round has no bad frame data add to list
         try:
-            #players[5].print_stats()
+            players[5].print_stats()
             game[len(game)-1].players = players #add players stats for each round
           
         except:

@@ -13,7 +13,7 @@ class Player:
         self.health = []
         self.HasHelmet = []
         self.HasArmor = []
-        self.FlashDuration = []
+        self.Flash = []
         self.CDFlashDuration = [] #Countdown flash duration
         self.HasDefuser = []
         self.grenade_count = []
@@ -38,12 +38,19 @@ class Player:
         self.pitch.append([tick_data.pitch.loc[tick_idx+z]])
         self.yaw.append(([tick_data.yaw.loc[tick_idx+z]]))
         self.health.append([tick_data.health.loc[tick_idx+z]])
-        self.FlashDuration.append([tick_data.flash_duration.loc[tick_idx + z]])
 
+
+        
+        Flash_Duration = [tick_data.flash_duration.loc[tick_idx + z]]
         Defuser = [tick_data.has_defuser[tick_idx+z]]
         Helmet= [tick_data.has_helmet.loc[tick_idx+z]]
         armorvalue = ([tick_data.armor_value.loc[tick_idx+z]])
 
+
+        if(Flash_Duration[0] > 0):
+            self.Flash.append(1)
+        else:
+            self.Flash.append(0)
         if(Helmet[0] == False):
             self.HasHelmet.append(0) 
         else:
@@ -102,7 +109,7 @@ class Player:
 
 
     def print_stats(self):
-        
+        '''
         print("Player:", self.player_name)
         print("Team Name:", self.team_name)
         print("Position:",self.position)
@@ -114,9 +121,10 @@ class Player:
         print("PrimaryWeapon", self.primary_weapon)
         print("SecondaryWeapon",self.secondary_weapon)
         print("HasArmor:", self.HasArmor)
-        print("FlashDuration:",self.FlashDuration)
-        print("HasDefuser:", self.HasDefuser)
+        '''
+        print("Flash:",self.Flash)
+        #print("HasDefuser:", self.HasDefuser)
         
-        print("Grenade Counter:", self.grenade_count)
-        print("HasBomb:", self.HasBomb)
+        #print("Grenade Counter:", self.grenade_count)
+        #print("HasBomb:", self.HasBomb)
     
