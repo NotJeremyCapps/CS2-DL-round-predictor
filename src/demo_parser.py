@@ -84,6 +84,8 @@ def main():
                               enums_path="enums.json")
         game.append(current_round)
 
+    skip_counter = 0
+
     # possible_inventory_items = []
     for round_num in range(len(parser.rounds)): #loops for every round played
     #for round_num in range(12,13):
@@ -100,7 +102,8 @@ def main():
             players.append(Player(name=f"player{i}", enums_path = "enums.json"))
         
         # init headers for each player in round dataframe
-        game[round_num].init_headers(players, round_starts[round_num], round_ends[round_num])
+        #print(round_num)
+        game[round_num-skip_counter].init_headers(players, round_starts[round_num], round_ends[round_num])
 
         #for testing
         #round_player = []
@@ -110,7 +113,7 @@ def main():
 
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
-            game[round_num].tick_idxs.append(y)
+            game[round_num-skip_counter].tick_idxs.append(y)
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
@@ -122,8 +125,9 @@ def main():
 
             if(curr_tick_info.empty):
                 print("error parsing data for round ", round_num+1)
-                del game[len(game)-1]
+                del game[round_num-skip_counter]
                 del players
+                skip_counter += 1
                 break
 
            
@@ -201,10 +205,12 @@ def main():
             #for testing
             #round_player.append(all_players_name)
             #round_team_name.append(all_team_name)
-
-        game[round_num].load_player_tick_data(players=players)
-        game[round_num].load_round_data(round_dict=parser.rounds)
-        game[round_num].write_round_to_csv()
+        try:
+            game[round_num-skip_counter].load_player_tick_data(players=players)
+            game[round_num-skip_counter].load_round_data(round_dict=parser.rounds)
+            game[round_num-skip_counter].write_round_to_csv()
+        except:
+            continue
 
         
         #if round has no bad frame data add to list

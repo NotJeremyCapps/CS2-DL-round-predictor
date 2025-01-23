@@ -15,7 +15,7 @@ class Round:
 
         self.map = None
         self.bomb_planted = [False]
-        self.bomb_postion = [(0,0,0)]
+        self.bomb_postion = []
 
         self.tick_idxs = []
         self.bomb_timer_left = 0
@@ -69,8 +69,19 @@ class Round:
         #    print("TEST?")
         #    print("length: ", len(self.players))
             for player in self.players:
+                #print(self.df[f"{player.player_name}_x"][x])
+                if(self.df[f"{player.player_name}_has_bomb"][x] == 1):
+                    self.bomb_postion.append(((self.df[f"{player.player_name}_x"][x]), (self.df[f"{player.player_name}_y"][x]), (self.df[f"{player.player_name}_z"][x])))
+
+            if(len(self.bomb_postion) == 0):
+                self.bomb_postion.append((-128.00403, -1632.0, -0.9609375)) #a position i found in a round where the bomb started, prob somewhere in T spawn
+            elif(len(self.bomb_postion) == x):
+                self.bomb_postion.append(self.bomb_postion[-1])
+
+        #print(self.bomb_postion)
+                    
         #        print("!!!!!!")
-                print("HASBOMB!: ",self.df[f"{player.player_name}_has_bomb"][x])#if(self.df[f"{player.player_name}_has_bomb"]) == 1:
+                #print("HASBOMB!: ",self.df[f"{player.player_name}_has_bomb"][x])#if(self.df[f"{player.player_name}_has_bomb"]) == 1:
                 #    print(player.player_name)
 
         with open("round_class_info.txt", "a") as f:
