@@ -74,6 +74,7 @@ def main():
     game:list[Round] = [] #game to contain all the rounds
 
     for n in range(len(parser.rounds)):
+    #for n in range(1):
         round_title = f"{match_title}_round_{n}"
 
         current_round = Round(round_title=round_title, 
@@ -85,6 +86,7 @@ def main():
 
     # possible_inventory_items = []
     for round_num in range(len(parser.rounds)): #loops for every round played
+    #for round_num in range(12,13):
         # game.append(Round())
         
 
@@ -98,7 +100,7 @@ def main():
             players.append(Player(name=f"player{i}", enums_path = "enums.json"))
         
         # init headers for each player in round dataframe
-        game[round_num].init_headers(players)
+        game[round_num].init_headers(players, round_starts[round_num], round_ends[round_num])
 
         #for testing
         #round_player = []

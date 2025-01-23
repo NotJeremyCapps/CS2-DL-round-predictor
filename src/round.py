@@ -34,7 +34,10 @@ class Round:
         emun_file = open("enums.json", 'r')
         self.enums = json.loads(emun_file.read())
 
-    def init_headers(self, players):
+    def init_headers(self, players, start_tick, end_tick):
+        self.start_tick = start_tick
+        self.end_tick = end_tick
+        self.players = players
         for player in players:
             for attr in ['x', 'y', 'z', 'pitch', 'yaw', 'hp', 'flash_dur', 'has_helm', 'has_armor', 
                 'has_defuse', 'primary', 'secondary', 'grenades']:
@@ -58,6 +61,17 @@ class Round:
         self.df.loc[0, 'winner'] = round_dict['winner'][self.round_num]
         self.df.loc[0, 'reason'] = round_dict['reason'][self.round_num]
         self.df.loc[0, 'bomb_plant'] = self.bomb_plant_time
+
+        #print("TEST!")
+        #print("START: ",self.start_tick)
+        #print("END: ", self.end_tick)
+        for x in range(self.end_tick - self.start_tick):
+        #    print("TEST?")
+        #    print("length: ", len(self.players))
+            for player in self.players:
+        #        print("!!!!!!")
+                print("HASBOMB!: ",self.df[f"{player.player_name}_has_bomb"][x])#if(self.df[f"{player.player_name}_has_bomb"]) == 1:
+                #    print(player.player_name)
 
         with open("round_class_info.txt", "a") as f:
             f.write(str(round_dict))
@@ -91,6 +105,9 @@ class Round:
             self.df[f"{player.player_name}_secondary"] = pd.Series([secondary_weapon for secondary_weapon in player.secondary_weapon])
 
             self.df[f"{player.player_name}_grenades"] = pd.Series([grenade_count for grenade_count in player.grenade_count])
+
+            self.df[f"{player.player_name}_has_bomb"] = pd.Series([HasBomb for HasBomb in player.HasBomb])
+            #print(self.df[f"{player.player_name}_has_bomb"])
 
             self.df = self.df.copy()
 
