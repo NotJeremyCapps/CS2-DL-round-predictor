@@ -18,7 +18,8 @@ class Round:
         self.bomb_postion = []
 
         self.tick_idxs = []
-        self.bomb_timer_left = 0
+        self.bomb_timer = []
+        self.round_timer = []
 
         self.winner = None
         self.bomb_plant_time = None
@@ -65,19 +66,26 @@ class Round:
  
         for x in range(self.end_tick - self.start_tick):
 
+            if(x == 0):
+                self.round_timer.append(0)
+            else:
+                self.round_timer.append(self.round_timer[-1] + 1)
+
             if(self.bomb_plant_time == None):
                 self.bomb_planted.append(0)
+                self.bomb_timer.append(0)
             elif(x < self.bomb_plant_time):
                 self.bomb_planted.append(0)
+                self.bomb_timer.append(0)
             else:
                 self.bomb_planted.append(1)
+                self.bomb_timer.append(self.bomb_timer[-1] + 1)
 
 
             for player in self.players:
                 if(self.df[f"{player.player_name}_has_bomb"][x] == 1):
                     self.bomb_postion.append(((self.df[f"{player.player_name}_x"][x]), (self.df[f"{player.player_name}_y"][x]), (self.df[f"{player.player_name}_z"][x])))
-                    #print(((self.df[f"{player.player_name}_x"][x]), (self.df[f"{player.player_name}_y"][x]), (self.df[f"{player.player_name}_z"][x])))
-
+                    
             if(len(self.bomb_postion) == 0):
                 self.bomb_postion.append((-264.0, -1560.0, -11.96875)) #a position i found in a round where the bomb started, prob somewhere in T spawn
             elif(len(self.bomb_postion) == x):
