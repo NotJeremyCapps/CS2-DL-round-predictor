@@ -14,7 +14,7 @@ class Round:
         self.players = []
 
         self.map = None
-        self.bomb_planted = [False]
+        self.bomb_planted = []
         self.bomb_postion = []
 
         self.tick_idxs = []
@@ -40,7 +40,7 @@ class Round:
         self.players = players
         for player in players:
             for attr in ['x', 'y', 'z', 'pitch', 'yaw', 'hp', 'flash_dur', 'has_helm', 'has_armor', 
-                'has_defuse', 'primary', 'secondary', 'grenades']:
+                'has_defuse', 'primary', 'secondary', 'grenades', 'has_bomb']:
                 col_name = f"{player.player_name}_{attr}"
                 if col_name not in self.df.columns:
                     self.df[col_name] = pd.Series(dtype=object)
@@ -51,7 +51,7 @@ class Round:
         self.winner = round_dict['winner'][self.round_num]
 
         if str(round_dict['bomb_plant'][self.round_num]) != "<NA>":
-            self.bomb_plant_time = int(round_dict['bomb_plant'][self.round_num])
+            self.bomb_plant_time = int(round_dict['bomb_plant'][self.round_num]) - self.start_tick #when bomb was planted tick relative to round start
         else:
             self.bomb_plant_time = None
         
@@ -62,27 +62,28 @@ class Round:
         self.df.loc[0, 'reason'] = round_dict['reason'][self.round_num]
         self.df.loc[0, 'bomb_plant'] = self.bomb_plant_time
 
-        #print("TEST!")
-        #print("START: ",self.start_tick)
-        #print("END: ", self.end_tick)
+ 
         for x in range(self.end_tick - self.start_tick):
-        #    print("TEST?")
-        #    print("length: ", len(self.players))
+
+            if(self.bomb_plant_time == None):
+                self.bomb_planted.append(0)
+            elif(x < self.bomb_plant_time):
+                self.bomb_planted.append(0)
+            else:
+                self.bomb_planted.append(1)
+
+
             for player in self.players:
-                #print(self.df[f"{player.player_name}_x"][x])
                 if(self.df[f"{player.player_name}_has_bomb"][x] == 1):
                     self.bomb_postion.append(((self.df[f"{player.player_name}_x"][x]), (self.df[f"{player.player_name}_y"][x]), (self.df[f"{player.player_name}_z"][x])))
+                    #print(((self.df[f"{player.player_name}_x"][x]), (self.df[f"{player.player_name}_y"][x]), (self.df[f"{player.player_name}_z"][x])))
 
             if(len(self.bomb_postion) == 0):
-                self.bomb_postion.append((-128.00403, -1632.0, -0.9609375)) #a position i found in a round where the bomb started, prob somewhere in T spawn
+                self.bomb_postion.append((-264.0, -1560.0, -11.96875)) #a position i found in a round where the bomb started, prob somewhere in T spawn
             elif(len(self.bomb_postion) == x):
                 self.bomb_postion.append(self.bomb_postion[-1])
 
-        #print(self.bomb_postion)
-                    
-        #        print("!!!!!!")
-                #print("HASBOMB!: ",self.df[f"{player.player_name}_has_bomb"][x])#if(self.df[f"{player.player_name}_has_bomb"]) == 1:
-                #    print(player.player_name)
+        #print(self.bomb_planted)
 
         with open("round_class_info.txt", "a") as f:
             f.write(str(round_dict))

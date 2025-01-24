@@ -226,6 +226,8 @@ def main():
     #every tick has a list of all 10 players in the game
     #each of the 10 players in the tick has a list of their X,Y,Z positions
 
+    print(parser.other_props)
+
 
 
 main()
