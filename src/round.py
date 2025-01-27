@@ -1,6 +1,7 @@
 import os
 import json
 import pandas as pd
+import sklearn
 
 class Round:
     def __init__(self, round_title="",round_num=0, map_name=None, demo_data_root="../game_demos", enums_path:str="enums.json"):
@@ -26,13 +27,16 @@ class Round:
 
         self.df = pd.DataFrame()
 
-        preprocessed_dir_pth = os.path.join(demo_data_root, "preprocessed", map_name)
-        os.makedirs(preprocessed_dir_pth, exist_ok=True)
+        self.preprocessed_dir_pth = os.path.join(demo_data_root, "preprocessed", map_name)
+        os.makedirs(self.preprocessed_dir_pth, exist_ok=True)
 
-        self.csv_file = os.path.join(preprocessed_dir_pth, f"{self.round_title}.csv")
+        self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
+        self.round_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds.txt")
 
         emun_file = open("enums.json", 'r')
         self.enums = json.loads(emun_file.read())
+
+        self.input_params_num = 0
 
     def init_headers(self, players):
         for player in players:
@@ -41,26 +45,31 @@ class Round:
                 col_name = f"{player.player_name}_{attr}"
                 if col_name not in self.df.columns:
                     self.df[col_name] = pd.Series(dtype=object)
+                    self.input_params_num += 1
 
     def load_round_data(self, round_dict: dict):
 
         print(f"Winner: {round_dict['winner'][self.round_num]}")
         self.winner = round_dict['winner'][self.round_num]
+        self.input_params_num += 1
 
         if str(round_dict['bomb_plant'][self.round_num]) != "<NA>":
             self.bomb_plant_time = int(round_dict['bomb_plant'][self.round_num])
         else:
             self.bomb_plant_time = None
+        self.input_params_num += 1
         
         print(f"Reason: {round_dict['reason'][self.round_num]}")
         self.reason = round_dict['reason'][self.round_num]
+        self.input_params_num += 1
 
         self.df.loc[0, 'winner'] = round_dict['winner'][self.round_num]
         self.df.loc[0, 'reason'] = round_dict['reason'][self.round_num]
         self.df.loc[0, 'bomb_plant'] = self.bomb_plant_time
+        self.input_params_num += 1
 
-        with open("round_class_info.txt", "a") as f:
-            f.write(str(round_dict))
+        # with open("round_class_info.txt", "a") as f:
+        #     f.write(str(round_dict))
 
 
 
@@ -100,4 +109,9 @@ class Round:
     def write_round_to_csv(self):
 
         self.df.to_csv(self.csv_file, index=True)
+
+        with open(self.round_txt_file, "a") as f:
+            f.write(f"{self.csv_file}, InputParams: {self.input_params_num}\n")
+
+
         
