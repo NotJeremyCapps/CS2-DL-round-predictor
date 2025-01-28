@@ -34,7 +34,6 @@
             },
         "primary_weapon" :
             {
-                "Nova" : 0,
                 "XM1014" : 1,
                 "MAG-7" : 2,
                 "Sawed-Off" : 3,
@@ -57,21 +56,22 @@
                 "SCAR-20" : 20,
                 "G3SG1" : 21,
                 "M249" : 22,
-                "NEGEV" : 23
+                "NEGEV" : 23,
+                "Nova" : 24
 
             },
         "secondary_weapon" :
             {
-                "P2000" : 0,
-                "USP-S" : 1,
-                "Glock-18" : 2,
-                "P250" : 3,
-                "Five-SeveN" : 4,
-                "Tec-9" : 5,
-                "CZ75-Auto" : 6,
-                "Dual Berettas" : 7,
-                "Desert Eagle" : 8,
-                "R8 Revolver" : 9
+                "P2000" : 1,
+                "USP-S" : 2,
+                "Glock-18" : 3,
+                "P250" : 4,
+                "Five-SeveN" : 5,
+                "Tec-9" : 6,
+                "CZ75-Auto" : 7,
+                "Dual Berettas" : 8,
+                "Desert Eagle" : 9,
+                "R8 Revolver" : 10
             },
         "melee": 
                 ["knife",
