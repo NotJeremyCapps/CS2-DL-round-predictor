@@ -70,21 +70,31 @@ class Player:
         
         self.HasBomb.append(0)
         grenade_counter = 0
+        has_prim = False
+        has_second = False
+        hasBomb = False
         # Enumerate primary, secondary weapons, grenade, and has_bomb based on player inventory
         for weap in tick_data.inventory.loc[tick_idx+z]:
             if weap in self.enums["Player"]["primary_weapon"]:
                 self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
-
+                has_prim = True
             elif weap in self.enums["Player"]["secondary_weapon"]:
                 self.secondary_weapon.append(self.enums["Player"]["secondary_weapon"][weap])
-
+                has_second = True
             elif weap in self.enums["Player"]["grenade"]:
                 grenade_counter += 1
             elif (weap == "C4"):#bomb
                 self.HasBomb[-1] = 1#assumes only one bomb on all players at a time.
+                hasBomb = True
             else: 
                 #This should be a melee weapon if isnt in first 2 conditions
                 pass
+        if hasBomb == False:
+            self.HasBomb[-1]
+        if has_prim == False:
+            self.primary_weapon.append(0)
+        if has_second == False:
+            self.secondary_weapon.append(0)
             #print(z)
             #print(tick_data.inventory.loc[tick_idx+z])
 

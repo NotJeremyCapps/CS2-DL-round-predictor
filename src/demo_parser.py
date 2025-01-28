@@ -153,16 +153,16 @@ def main():
            
         
         #if round has no bad frame data add to list
-        try:
+        # try:
             # game[len(game)-1].players = players #add players stats for each round
 
-            game[round_num].load_player_tick_data(players=players)
-            game[round_num].load_round_data(round_dict=parser.rounds)
-            game[round_num].write_round_to_csv()
+        game[round_num].load_player_tick_data(players=players)
+        game[round_num].load_round_data(round_dict=parser.rounds)
+        game[round_num].write_round_to_csv()
           
-        except:
-            print("a round was invalid and can't be added to list")
-            # does this to skip append if round was deleted
+        # except Exception as e:
+        #     print(f"a round was invalid and can't be added to list, Error: {e}")
+        #     # does this to skip append if round was deleted
 
     #game_movements is a list of each valid round
     #each round in game_movements has a list of every tick that round
