@@ -18,7 +18,8 @@ class Round:
         self.bomb_planted = [False]
         self.bomb_postion = [(0,0,0)]
 
-        self.tick_idxs = []
+        self.tick_start = 0
+        self.tick_end = 0
         self.bomb_timer_left = 0
 
         self.winner = None
@@ -39,6 +40,7 @@ class Round:
         self.input_params_num = 0
 
     def init_headers(self, players):
+        self.df["tick"] = pd.Series(dtype=int)
         for player in players:
             for attr in ['x', 'y', 'z', 'pitch', 'yaw', 'hp', 'flash_dur', 'has_helm', 'has_armor', 
                 'has_defuse', 'primary', 'secondary', 'grenades']:
@@ -64,13 +66,20 @@ class Round:
         self.input_params_num += 1
 
         self.df.loc[0, 'winner'] = round_dict['winner'][self.round_num]
+
+        if round_dict['winner'][self.round_num] == "CT":
+            self.df.loc[0, 'winner'] = 0
+        else:
+            self.df.loc[0, 'winner'] = 1
+
         self.df.loc[0, 'reason'] = round_dict['reason'][self.round_num]
         self.df.loc[0, 'bomb_plant'] = self.bomb_plant_time
         self.input_params_num += 1
 
+        self.df['tick'] = pd.Series([tick for tick in range(round_dict['freeze_end'], round_dict['end']+1)])
+
         # with open("round_class_info.txt", "a") as f:
         #     f.write(str(round_dict))
-
 
 
     def load_player_tick_data(self, players):
