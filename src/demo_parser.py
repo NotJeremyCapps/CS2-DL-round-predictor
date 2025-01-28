@@ -103,7 +103,7 @@ def main():
 
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
-            game[round_num].tick_idxs.append(y)
+            #Set Current round of tick 
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
