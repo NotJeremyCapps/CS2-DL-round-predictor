@@ -95,7 +95,7 @@
                 "knife_outdoor"]
 
         ,
-        "grenades" : 
+        "grenade" : 
             {
                 "Incendiary Grenade" : 0,
                 "Molotov" : 1,
