@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class AudioLSTM(nn.Module):
+class CS2LSTM(nn.Module):
 
     def __init__(self, n_feature=3, out_feature=3, n_hidden=256, n_layers=2, drop_prob=0.5):
         super().__init__()
