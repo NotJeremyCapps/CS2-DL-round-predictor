@@ -73,7 +73,7 @@ def main():
 
     game:list[Round] = [] #game to contain all the rounds
 
-    for n in range(len(parser.rounds)+1):
+    for n in range(len(parser.rounds)):
         round_title = f"{match_title}_round_{n+1}"
 
         current_round = Round(round_title=round_title, 
@@ -83,8 +83,11 @@ def main():
                               enums_path="enums.json")
         game.append(current_round)
 
+    skip_counter = 0
+
     # possible_inventory_items = []
-    for round_num in range(len(parser.rounds)+1): #loops for every round played
+    for round_num in range(len(parser.rounds)): #loops for every round played
+    #for round_num in range(12,13):
         # game.append(Round())
         
 
@@ -98,12 +101,13 @@ def main():
             players.append(Player(name=f"player{i}", enums_path = "enums.json"))
         
         # init headers for each player in round dataframe
-        game[round_num].init_headers(players)
+        #print(round_num)
+        game[round_num-skip_counter].init_headers(players, round_starts[round_num], round_ends[round_num])
 
 
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
-            #Set Current round of tick 
+            game[round_num-skip_counter].tick_idxs.append(y)
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
@@ -115,8 +119,9 @@ def main():
 
             if(curr_tick_info.empty):
                 print("error parsing data for round ", round_num+1)
-                del game[len(game)-1]
+                del game[round_num-skip_counter]
                 del players
+                skip_counter += 1
                 break
 
             # Ten players in game
@@ -151,14 +156,21 @@ def main():
                     print(round_team_name[y-1])
                 '''
            
+
+            #for testing
+            #round_player.append(all_players_name)
+            #round_team_name.append(all_team_name)
+        try:
+            game[round_num-skip_counter].load_player_tick_data(players=players)
+            game[round_num-skip_counter].load_round_data(round_dict=parser.rounds)
+            game[round_num-skip_counter].write_round_to_csv()
+        except:
+            continue
+
         
         #if round has no bad frame data add to list
         # try:
-            # game[len(game)-1].players = players #add players stats for each round
-
-        game[round_num].load_player_tick_data(players=players)
-        game[round_num].load_round_data(round_dict=parser.rounds)
-        game[round_num].write_round_to_csv()
+        #     game[len(game)-1].players = players #add players stats for each round
           
         # except Exception as e:
         #     print(f"a round was invalid and can't be added to list, Error: {e}")
@@ -168,6 +180,7 @@ def main():
     #each round in game_movements has a list of every tick that round
     #every tick has a list of all 10 players in the game
     #each of the 10 players in the tick has a list of their X,Y,Z positions
+
 
 
 

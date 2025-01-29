@@ -15,8 +15,8 @@ class Round:
         self.players = []
 
         self.map = None
-        self.bomb_planted = [False]
-        self.bomb_postion = [(0,0,0)]
+        self.bomb_planted = []
+        self.bomb_postion = []
 
         self.tick_start = 0
         self.tick_end = 0
