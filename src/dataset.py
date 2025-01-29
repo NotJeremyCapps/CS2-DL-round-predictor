@@ -7,76 +7,109 @@ import pandas as pd
 import csv
 
 
-class CS2PredictionDataset(Dataset):
-    def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
 
-        #sets amount of data points/ticks for each sequence
-        self.sequence_length= sequence_length
-       
-        self.list = list
-        #read in csv
+class CS2PredictionDataset(Dataset):
+
+
+    def load_tensors(self):
         with open(self.list, 'r') as file1: #open text file to list of csv files
             words = file1.read().strip().split()
             print(words)
-            with open(words[0], 'r') as file2: #open first csv file as file2
-        #with open(self.list, 'r'):
+            with open(words[self.csvfile], 'r') as file2: #open first csv file as file2 -- need to indicate based on order of csv file
                 readingcsv = csv.reader(file2)
                 self.all_data = []
                 for row in readingcsv: 
                     self.all_data.append(row) #first index is row and then col
 
-        #create target array  
+        #create target tensor  
+        self.target_for_round= torch.tensor(float(self.all_data[1][-1])) 
 
-        self.target_for_round= float(self.all_data[1][-1]) #create target array for target
+        #find prim/secondary index
+        data_weap_ind = 0
+        for index, word in enumerate(self.all_data[0]):
+            if "primary" in word:
+                data_weap_ind = index
+                break
+            elif "secondary" in word:
+                data_weap_ind = index
+                break
 
-        #create data as float
+    
+        #create non prim/second data into floats
         int_data = []
-        for i in range(1, len(self.all_data)-1):#increment over every row
+    
+        for i in range(1, len(self.all_data)):#increment over every row
             temp_array = []
-            for m in range(len(self.all_data[i])-1): #do not include win column
+            for m in range(data_weap_ind): #up to prim/secondary data -THIS 96 IS INCORRECT SHOULD PROB automate
                     #convert to float
                     temp_array.append(float(self.all_data[i][m])) 
                    
             int_data.append(temp_array)
-
-
-
-
+            
         #change into tensor
         self.data = torch.tensor(int_data) #data index 
-
-        print(self.data)
+        
+        #create prim/secondary weapon data as floats
+        int_data_weap = []
+    
+        for i in range(1, len(self.all_data)):#increment over every row
+            temp_array = []
+            for m in range(data_weap_ind,len(self.all_data[0])-1): #from prim/secondary data to win -- THIS 96 IS NOT CORRECt -SHOULD PROB AUTOMATE
+                    #convert to float
+                    temp_array.append(float(self.all_data[i][m])) 
+                   
+            int_data_weap.append(temp_array)
+            
+        #change into tensor
+        self.data_weap = torch.tensor(int_data_weap) #data index 
+        
+        #print(self.data)
         self.offset = 0 #offset from padding
-        self.csvfile = 1
+        self.csvfile += 1
+
+
+    def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
+
+        #sets amount of data points/ticks for each sequence
+        self.sequence_length= sequence_length
+
+        self.csvfile = 0
+        self.list = list
+        #read in csv
+        
+        self.load_tensors()
+
+
 
 
 
     
 
 
-    def __getitem__(self, index): #index is beginning index of sequence, this assumes all the data for rounds and games is sequential
+    def __getitem__(self, prov_index): #index is beginning index of sequence, this assumes all the data for rounds and games is sequential
         
         #--- We need a tick column --- 
-        index = index + self.offset
-        if self.data[index][0] == 0: #tick is 0 may need to pa
-            len_of_round = len(self.data)
-            excess= len_of_round%self.sequence_length # not 0 based
-            if(excess!= 0): #round needs to be padded
-                x = P.pad(self.data,(0,0,excess,0), value=0) 
-            #x = torch.cat((padding, self.data[index][0:len_of_round]), 0)
+        tensor_index = prov_index *self.sequence_length + self.offset
+        len_of_round = len(self.data)
+        excess= len_of_round%self.sequence_length # not 0 based
+        if self.data[tensor_index][0] == 0 and excess!= 0: #tick needs to be padded
+            x_main_data = P.pad(self.data,(0,0,excess,0), value=0) 
+            x_data_weap = P.pad(self.data_weap,(0,0,excess,0), value=0) 
             self.offset = excess
         else: #if ticks restart -> pad
-           x = self.data[index :index + self.sequence_length]
+           x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
+           x_data_weap = self.data_weap[tensor_index :tensor_index + self.sequence_length]
 
         with open('tensor_output.txt', 'w') as f:
             torch.set_printoptions(threshold=torch.inf)
-            print(x, file = f)
+            print(x_main_data, file = f)
 
 
 
         #reload
-        if(index + self.sequence_length ==  len(self.data)):      
-        
+        if(tensor_index + self.sequence_length ==  len(self.data)):      
+            self.load_tensors()
+            '''
             #read in csv
             with open(self.list, 'r') as file1: #open text file to list of csv files
                 words = file1.read().strip().split()
@@ -92,33 +125,22 @@ class CS2PredictionDataset(Dataset):
 
             #create data as float
             int_data = []
-            for i in range(1, len(self.all_data)-1):#increment over every row
+            for i in range(1, len(self.all_data)):#increment over every row
                 temp_array = []
-                for m in range(len(self.all_data[i])-1): #do not include win column
+                for m in range(96): #do not include win column
                         #convert to float
                         temp_array.append(float(self.all_data[i][m])) 
                     
                 int_data.append(temp_array)
-
-
-
 
             #change into tensor
             self.data = torch.tensor(int_data) #data index 
 
             self.offset = 0 #offset from padding
             self.csvfile += 1
+            '''
 
-        return x, self.target_for_round
-
-
-
-        data, label = self.tensor_dataset[index], self.labels[index]
-        #or self.tensor_dataset.columns will return labels of columns
-
-
-
-        return data, label
+        return self.target_for_round, x_main_data, x_data_weap
     
     def __len__(self): #samples in dataset
         csv_count = 0
@@ -147,3 +169,4 @@ class CS2PredictionDataset(Dataset):
     -replace with index of win
 
 '''
+
