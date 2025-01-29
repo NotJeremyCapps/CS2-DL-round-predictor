@@ -102,18 +102,17 @@ def main():
         
         # init headers for each player in round dataframe
         #print(round_num)
-        game[round_num-skip_counter].init_headers(players, round_starts[round_num], round_ends[round_num])
+        game[round_num-skip_counter].init_headers()
 
 
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
-            game[round_num-skip_counter].tick_idxs.append(y)
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
-            if y % 10 == 0:
-                with open("tick_info.txt", "a") as f:
-                    f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
+            # if y % 10 == 0:
+            #     with open("tick_info.txt", "a") as f:
+            #         f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
 
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
 

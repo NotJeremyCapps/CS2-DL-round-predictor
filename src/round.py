@@ -39,7 +39,7 @@ class Round:
 
         self.input_params_num = 0
 
-    def init_headers(self, players):
+    def init_headers(self):
         self.df["game_tick"] = pd.Series(dtype=object)
         # for player in players:
         #     for attr in ['x', 'y', 'z', 'pitch', 'yaw', 'hp', 'flash_dur', 'has_helm', 'has_armor', 
