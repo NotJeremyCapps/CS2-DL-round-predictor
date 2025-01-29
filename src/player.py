@@ -28,7 +28,7 @@ class Player:
         self.enums = json.loads(emun_file.read())
         #self.enums = None
 
-#tick idx is data frame, tick data is eata of tick
+#tick idx is data frame, tick data is data of tick
     def load_tick_data(self, tick_idx: int, tick_data, z):
         if(self.team_name == None):
             self.team_name = tick_data.team_name.loc[tick_idx+z]
@@ -70,23 +70,39 @@ class Player:
         
         self.HasBomb.append(0)
         grenade_counter = 0
+        primary_weapon = 0 
+        secondary_weapon = 0 
         # Enumerate primary, secondary weapons, grenade, and has_bomb based on player inventory
         for weap in tick_data.inventory.loc[tick_idx+z]:
             if weap in self.enums["Player"]["primary_weapon"]:
                 self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
-
+                primary_weapon  = 1
             elif weap in self.enums["Player"]["secondary_weapon"]:
                 self.secondary_weapon.append(self.enums["Player"]["secondary_weapon"][weap])
+                secondary_weapon = 1
+                '''
+                sec_weap = self.enums["Player"]["secondary_weapon"][weap]
+                if(sec_weap == ''):
+                    self.secondary_weapon.append(0)
+                else:
+                    self.secondary_weapon.append(sec_weap)
+                '''
 
             elif weap in self.enums["Player"]["grenade"]:
                 grenade_counter += 1
             elif (weap == "C4"):#bomb
                 self.HasBomb[-1] = 1#assumes only one bomb on all players at a time.
+                hasBomb = True
             else: 
                 #This should be a melee weapon if isnt in first 2 conditions
                 pass
-            #print(z)
-            #print(tick_data.inventory.loc[tick_idx+z])
+      
+    
+        if(secondary_weapon == 0):
+            self.secondary_weapon.append(0)
+        if(primary_weapon == 0):
+            self.primary_weapon.append(0)
+
 
         self.grenade_count.append(grenade_counter)
       
@@ -113,7 +129,9 @@ class Player:
         
         print("Grenade Counter:", self.grenade_count)
         print("HasBomb:", self.HasBomb)
-        '''
         print("Yaw:", self.yaw)
+        '''
+        print("SecondaryWeapon",self.secondary_weapon)
+
 
     

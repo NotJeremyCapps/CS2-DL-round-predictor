@@ -74,8 +74,7 @@ def main():
     game:list[Round] = [] #game to contain all the rounds
 
     for n in range(len(parser.rounds)):
-    #for n in range(1):
-        round_title = f"{match_title}_round_{n}"
+        round_title = f"{match_title}_round_{n+1}"
 
         current_round = Round(round_title=round_title, 
                               round_num=n,
@@ -103,23 +102,17 @@ def main():
         
         # init headers for each player in round dataframe
         #print(round_num)
-        game[round_num-skip_counter].init_headers(players, round_starts[round_num], round_ends[round_num])
-
-        #for testing
-        #round_player = []
-        #round_team_name = []
-
+        game[round_num-skip_counter].init_headers()
 
 
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
-            game[round_num-skip_counter].tick_idxs.append(y)
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
-            if y % 10 == 0:
-                with open("tick_info.txt", "a") as f:
-                    f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
+            # if y % 10 == 0:
+            #     with open("tick_info.txt", "a") as f:
+            #         f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
 
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
 
@@ -130,49 +123,10 @@ def main():
                 skip_counter += 1
                 break
 
-           
-            #for testing
-            #all_players_name = []
-            #all_team_name = []
-
             # Ten players in game
             for z in range(0, 10):
 
                 players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
-
-                # plyr_tick_data_idx = start_idx_curr_tick+z
-
-                # player_location = [curr_tick_info.X.loc[start_idx_curr_tick+z], curr_tick_info.Y.loc[start_idx_curr_tick+z], curr_tick_info.Z.loc[start_idx_curr_tick+z]]
-                # player_pitch = [curr_tick_info.pitch.loc[start_idx_curr_tick+z]]
-                # player_yaw = [curr_tick_info.yaw.loc[start_idx_curr_tick+z]]
-                # player_health = [curr_tick_info.health.loc[start_idx_curr_tick+z]]
-                # player_HasHelmet = [curr_tick_info.has_helmet.loc[start_idx_curr_tick+z]]
-                
-                # players[z].load_tick_data(plyr_tick_data_idx, curr_tick_info)
-
-                # player_inventory = curr_tick_info.inventory.loc[start_idx_curr_tick+z]
-
-                # for weap in player_inventory:
-                #     if weap not in possible_inventory_items:
-                #         possible_inventory_items.append(weap)
-                #         with open("possible_weapons.txt", "a") as f:
-                #             f.write(str(weap) + "\n")
-
-
-              
-                #append individual player information for each tick
-                # players[z].postion.append(player_location)
-                # players[z].pitch.append(player_pitch)
-                # players[z].yaw.append(player_yaw)
-                # players[z].health.append(player_health)
-
-                # if(player_HasHelmet[0] == False):
-                #     players[z].HasHelmet.append(0)
-                # else:
-                #     players[z].HasHelmet.append(1)
-
-
-
 
                 #double checks to make sure players for data frames are in the same order
                 '''
@@ -217,9 +171,9 @@ def main():
         # try:
         #     game[len(game)-1].players = players #add players stats for each round
           
-        # except:
-        #     print("a round was invalid and can't be added to list")
-            # does this to skip append if round was deleted
+        # except Exception as e:
+        #     print(f"a round was invalid and can't be added to list, Error: {e}")
+        #     # does this to skip append if round was deleted
 
     #game_movements is a list of each valid round
     #each round in game_movements has a list of every tick that round
