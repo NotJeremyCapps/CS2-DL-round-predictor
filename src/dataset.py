@@ -62,8 +62,6 @@ class CS2PredictionDataset(Dataset):
             
         #change into tensor
         self.data_weap = torch.tensor(int_data_weap) #data index 
-        
-        #print(self.data)
         self.offset = 0 #offset from padding
         self.csvfile += 1
 
@@ -89,66 +87,42 @@ class CS2PredictionDataset(Dataset):
     def __getitem__(self, prov_index): #index is beginning index of sequence, this assumes all the data for rounds and games is sequential
         
         #--- We need a tick column --- 
-        tensor_index = prov_index *self.sequence_length + self.offset
+        tensor_index = prov_index *self.sequence_length - self.offset
         len_of_round = len(self.data)
-        excess= len_of_round%self.sequence_length # not 0 based
-        if self.data[tensor_index][0] == 0 and excess!= 0: #tick needs to be padded
-            x_main_data = P.pad(self.data,(0,0,excess,0), value=0) 
+        excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
+        if self.offset == 0 and excess!= 30: #tick needs to be padded if there is excess frames and 0 offset
+            x_main_data = P.pad(self.data,(0,0,excess,0), value=0)
             x_data_weap = P.pad(self.data_weap,(0,0,excess,0), value=0) 
             self.offset = excess
+            x_main_data = x_main_data[0:self.sequence_length]
+            x_data_weap = x_data_weap[0:self.sequence_length]
         else: #if ticks restart -> pad
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
            x_data_weap = self.data_weap[tensor_index :tensor_index + self.sequence_length]
 
-        with open('tensor_output.txt', 'w') as f:
+        with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
             torch.set_printoptions(threshold=torch.inf)
             print(x_main_data, file = f)
-
+        with open('dw_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+            torch.set_printoptions(threshold=torch.inf)
+            print(x_data_weap, file = f)
 
 
         #reload
         if(tensor_index + self.sequence_length ==  len(self.data)):      
             self.load_tensors()
-            '''
-            #read in csv
-            with open(self.list, 'r') as file1: #open text file to list of csv files
-                words = file1.read().strip().split()
-                with open(words[self.csvfile * 3], 'r') as file2: #open first csv file as file2
-                    readingcsv = csv.reader(file2)
-                    self.all_data = []
-                    for row in readingcsv: 
-                        self.all_data.append(row) #first index is row and then col
-
-            #create target array  
-
-            self.target_for_round= float(self.all_data[1][-1]) #create target array for target
-
-            #create data as float
-            int_data = []
-            for i in range(1, len(self.all_data)):#increment over every row
-                temp_array = []
-                for m in range(96): #do not include win column
-                        #convert to float
-                        temp_array.append(float(self.all_data[i][m])) 
-                    
-                int_data.append(temp_array)
-
-            #change into tensor
-            self.data = torch.tensor(int_data) #data index 
-
-            self.offset = 0 #offset from padding
-            self.csvfile += 1
-            '''
 
         return self.target_for_round, x_main_data, x_data_weap
     
     def __len__(self): #samples in dataset
+        #
+       
         csv_count = 0
         total_len = 0
         with open(self.list, 'r') as file1: #open text file to list of csv files
             words = file1.read().strip().split()
-            while(csv_count *3 < len(words)-1):
-                with open(words[csv_count * 3], 'r') as file2: #open first csv file as file2
+            while(csv_count < len(words)):
+                with open(words[csv_count], 'r') as file2: #open first csv file as file2
                     readingcsv = csv.reader(file2)
                     current_data = []
                     for row in readingcsv: 
@@ -156,17 +130,7 @@ class CS2PredictionDataset(Dataset):
                     total_len = total_len + len(current_data) - 1
                     csv_count =csv_count + 1
         
-        print(total_len)
 
         return total_len
 
-
-
-
-'''
-    -add tick column
-    -secondary weapon needs to be enum to 0 if they have no weapon
-    -replace with index of win
-
-'''
 
