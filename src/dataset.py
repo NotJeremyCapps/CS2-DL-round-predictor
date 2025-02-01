@@ -5,11 +5,29 @@ import torch.nn.functional as P
 from torch.utils.data import Subset
 import pandas as pd
 import csv
+import math
 
 
 
 class CS2PredictionDataset(Dataset):
 
+    def calc_len(self):
+        csv_count = 0
+        self.total_len = 0
+        with open(self.list, 'r') as file1: #open text file to list of csv files
+            words = file1.read().strip().split()
+            while(csv_count < len(words)):
+                with open(words[csv_count], 'r') as file2: #open first csv file as file2
+                    readingcsv = csv.reader(file2)
+                    current_data = []
+                    for row in readingcsv: 
+                        current_data.append(row) #first index is row and then col
+                    self.total_len = self.total_len + math.ceil((len(current_data) - 1)/self.sequence_length) #remove first row for column titles
+
+                    #if((len(current_data)-1)%self.sequence_length != 0):
+                    #    total_len += 1
+                    csv_count =csv_count + 1
+        print(self.total_len)
 
     def load_tensors(self):
         with open(self.list, 'r') as file1: #open text file to list of csv files
@@ -75,7 +93,10 @@ class CS2PredictionDataset(Dataset):
         self.list = list
         #read in csv
         
+        self.new_round = 1
+
         self.load_tensors()
+        self.calc_len()
 
 
 
@@ -96,9 +117,15 @@ class CS2PredictionDataset(Dataset):
             self.offset = excess
             x_main_data = x_main_data[0:self.sequence_length]
             x_data_weap = x_data_weap[0:self.sequence_length]
+
+            #indicate new round
+            self.new_round = 1
+
+
         else: #if ticks restart -> pad
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
            x_data_weap = self.data_weap[tensor_index :tensor_index + self.sequence_length]
+           self.new_round = 0
 
         with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
             torch.set_printoptions(threshold=torch.inf)
@@ -112,25 +139,9 @@ class CS2PredictionDataset(Dataset):
         if(tensor_index + self.sequence_length ==  len(self.data)):      
             self.load_tensors()
 
-        return self.target_for_round, x_main_data, x_data_weap
+        return self.target_for_round, x_main_data, x_data_weap, self.new_round
     
-    def __len__(self): #samples in dataset
-        #
-       
-        csv_count = 0
-        total_len = 0
-        with open(self.list, 'r') as file1: #open text file to list of csv files
-            words = file1.read().strip().split()
-            while(csv_count < len(words)):
-                with open(words[csv_count], 'r') as file2: #open first csv file as file2
-                    readingcsv = csv.reader(file2)
-                    current_data = []
-                    for row in readingcsv: 
-                        current_data.append(row) #first index is row and then col
-                    total_len = total_len + len(current_data) - 1
-                    csv_count =csv_count + 1
-        
-
-        return total_len
+    def __len__(self):
+        return self.total_len
 
 
