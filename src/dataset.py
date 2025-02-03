@@ -32,6 +32,7 @@ class CS2PredictionDataset(Dataset):
     def load_tensors(self):
         with open(self.list, 'r') as file1: #open text file to list of csv files
             words = file1.read().strip().split()
+            self.total_csv_files = len(words)
             print(words)
             with open(words[self.csvfile], 'r') as file2: #open first csv file as file2 -- need to indicate based on order of csv file
                 readingcsv = csv.reader(file2)
@@ -40,7 +41,9 @@ class CS2PredictionDataset(Dataset):
                     self.all_data.append(row) #first index is row and then col
 
         #create target tensor  
-        self.target_for_round= torch.tensor(float(self.all_data[1][-1])) 
+        self.target_for_round= torch.tensor((float(self.all_data[1][-1])))
+
+        #self.target_for_round= torch.full((self.sequence_length,), (float(self.all_data[1][-1])))
 
         #find prim/secondary index
         data_weap_ind = 0
@@ -88,6 +91,8 @@ class CS2PredictionDataset(Dataset):
 
         #sets amount of data points/ticks for each sequence
         self.sequence_length= sequence_length
+        self.starting_index_of_round = 0
+
 
         self.csvfile = 0
         self.list = list
@@ -106,42 +111,52 @@ class CS2PredictionDataset(Dataset):
 
 
     def __getitem__(self, prov_index): #index is beginning index of sequence, this assumes all the data for rounds and games is sequential
-        
-        #--- We need a tick column --- 
-        tensor_index = prov_index *self.sequence_length - self.offset
+        #determines tensor index of round for total provided index/offset/seqence length
+        self.index_of_round = prov_index - self.starting_index_of_round
+        tensor_index = self.index_of_round *self.sequence_length - self.offset
         len_of_round = len(self.data)
-        excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
-        if self.offset == 0 and excess!= 30: #tick needs to be padded if there is excess frames and 0 offset
-            x_main_data = P.pad(self.data,(0,0,excess,0), value=0)
-            x_data_weap = P.pad(self.data_weap,(0,0,excess,0), value=0) 
-            self.offset = excess
-            x_main_data = x_main_data[0:self.sequence_length]
-            x_data_weap = x_data_weap[0:self.sequence_length]
 
+        excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
+        if self.offset == 0: #tick needs to be padded if there is excess frames and 0 offset
             #indicate new round
             self.new_round = 1
+            self.starting_index_of_round = prov_index
+            if excess!= 30:
+                x_main_data = P.pad(self.data,(0,0,excess,0), value=0)
+                x_data_weap = P.pad(self.data_weap,(0,0,excess,0), value=0) 
+                self.offset = excess
+                x_main_data = x_main_data[0:self.sequence_length]
+                x_data_weap = x_data_weap[0:self.sequence_length]
+
+            
 
 
-        else: #if ticks restart -> pad
+
+        else: 
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
            x_data_weap = self.data_weap[tensor_index :tensor_index + self.sequence_length]
            self.new_round = 0
 
-        with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
-            torch.set_printoptions(threshold=torch.inf)
-            print(x_main_data, file = f)
-        with open('dw_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
-            torch.set_printoptions(threshold=torch.inf)
-            print(x_data_weap, file = f)
-
+        if(prov_index == (146)):
+            with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
+                torch.set_printoptions(threshold=torch.inf)
+                print(x_main_data, file = f)
+            with open('dw_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+                torch.set_printoptions(threshold=torch.inf)
+                print(x_data_weap, file = f)
+        
 
         #reload
-        if(tensor_index + self.sequence_length ==  len(self.data)):      
+        if(tensor_index + self.sequence_length ==  len(self.data) and self.csvfile != self.total_csv_files ):      
             self.load_tensors()
+
+        #create tensor for new round
+        #self.new_round= torch.full((self.sequence_length,), (float(self.new_round)))
+
 
         return self.target_for_round, x_main_data, x_data_weap, self.new_round
     
     def __len__(self):
-        return self.total_len
+        return self.total_len 
 
 
