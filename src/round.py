@@ -313,16 +313,16 @@ class Round:
 
         self.df = pd.concat([self.df, *self.other_dfs.values()], axis=1)
 
-        for col in self.df.columns:
-            if col.endswith('_primary'): # Gets the first instance of primary for later enbedding processing
-                categ_idx = self.df.columns.get_loc(col)
-                break
+        # for col in self.df.columns:
+        #     if col.endswith('_primary'): # Gets the first instance of primary for later enbedding processing
+        #         categ_idx = self.df.columns.get_loc(col)
+        #         break
         
 
         self.df.to_csv(self.csv_file, index=True)
 
         with open(self.round_txt_file, "a") as f:
-            f.write(f"{self.csv_file}, category_dx: {categ_idx} / {len(self.df.columns)}\n")
+            f.write(f"{self.csv_file}\n")
 
 
         
