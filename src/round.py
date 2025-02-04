@@ -316,6 +316,7 @@ class Round:
         for col in self.df.columns:
             if col.endswith('_primary'): # Gets the first instance of primary for later enbedding processing
                 categ_idx = self.df.columns.get_loc(col)
+                break
         
 
         self.df.to_csv(self.csv_file, index=True)
