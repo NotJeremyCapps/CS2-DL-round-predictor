@@ -1,5 +1,11 @@
-../game_demos/preprocessed/de_anubis/de_anubis_0_round_1.csv, InputParams: 134
-../game_demos/preprocessed/de_anubis/de_anubis_0_round_2.csv, InputParams: 134
-../game_demos/preprocessed/de_anubis/de_anubis_0_round_3.csv, InputParams: 134
-../game_demos/preprocessed/de_anubis/de_anubis_0_round_4.csv, InputParams: 134
-../game_demos/preprocessed/de_anubis/de_anubis_0_round_5.csv, InputParams: 134
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_1.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_2.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_3.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_4.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_5.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_6.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_7.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_8.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_9.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_10.csv, category_dx: 163 / 166
+../game_demos/preprocessed/de_anubis/de_anubis_0_round_11.csv, category_dx: 163 / 166
