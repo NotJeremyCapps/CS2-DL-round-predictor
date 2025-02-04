@@ -121,7 +121,7 @@ class CS2PredictionDataset(Dataset):
             #indicate new round
             self.new_round = 1
             self.starting_index_of_round = prov_index
-            if excess!= 30:
+            if excess!= self.sequence_length:
                 x_main_data = P.pad(self.data,(0,0,excess,0), value=0)
                 x_data_weap = P.pad(self.data_weap,(0,0,excess,0), value=0) 
                 self.offset = excess
