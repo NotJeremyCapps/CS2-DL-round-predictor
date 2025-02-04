@@ -29,11 +29,11 @@ def main():
 
 
     # print("round   start_tick   end_tick")
-    # for round in range(len(parser.rounds)):
-    #     print(round+1, "      ", round_starts[round], "      ", round_ends[round])
+    for round in range(len(parser.rounds)):
+        print(round+1, "      ", round_starts[round], "      ", round_ends[round])
 
-    #     with open("round_info.txt", "a") as f:
-    #         f.write(str(parser.rounds[round]))
+    with open("round_info.txt", "a") as f:
+        f.write(str(parser.rounds))
 
         
 
@@ -159,12 +159,14 @@ def main():
             #for testing
             #round_player.append(all_players_name)
             #round_team_name.append(all_team_name)
+       
         try:
             game[round_num-skip_counter].load_player_tick_data(players=players)
             game[round_num-skip_counter].load_round_data(round_dict=parser.rounds)
             game[round_num-skip_counter].write_round_to_csv()
-        except:
-            continue
+        except Exception as e:
+            print(f"Couldnt load round, Error: {e}")
+       
 
         
         #if round has no bad frame data add to list
