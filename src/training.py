@@ -9,38 +9,54 @@ from torch.utils.data import DataLoader
 import os
 import random
 
+from dataset import CS2PredictionDataset
+
+from model import CS2LSTM
+
 
 class ModelTrainer():
 
     def __init__(self, input_size, hidden_size, num_layers, output_size, data_set):
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
 
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = CS2LSTM()
+        # self.hidden_size = hidden_size
+        # self.num_layers = num_layers
 
-        self.model = self.lstm
+        # self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        # self.fc = nn.Linear(hidden_size, output_size)
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # self.data
+
+        # self.model = self.lstm
 
         if torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs!")
             self.model = torch.nn.DataParallel(self.model)  # Wrap model for multi-GPU
 
-        self.model.to(device)  # Move model to GPUs
+        self.model.to(self.device)  # Move model to GPUs
 
 
         self.lossFunc = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.training_data, self.testing_data = torch.utils.data.random_split(data_set, [0.75, 0.25])
+        self.dataset = CS2PredictionDataset(list="rounds.txt", sequence_length=30*60)
+
+        # self.training_data, self.testing_data = torch.utils.data.random_split(data_set, [0.75, 0.25])
+
+        self.dataloader = DataLoader(dataset=self.dataset,
+                                     batch_size=128,
+                                     num_workers=0
+                                     )
 
 
 
     def train_model(self): #loss function and optimizer should be prebuilt functions
-        for batch in self.training_data:
+        for i, (target, x_main_data, x_data_weap, new_round) in enumerate(self.dataloader):
             with open('passedtotraining.txt', 'a') as f:
-                print(batch, file = f)
+                print(target, x_main_data, x_data_weap, new_round, file = f)
         '''
         hidden = self.model.hidden_init() #initialize hidden variable
         self.model.train() #inherited function from model.py, sets model in training mode
