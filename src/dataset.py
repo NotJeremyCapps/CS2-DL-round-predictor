@@ -33,7 +33,7 @@ class CS2PredictionDataset(Dataset):
         with open(self.list, 'r') as file1: #open text file to list of csv files
             words = file1.read().strip().split()
             self.total_csv_files = len(words)
-            print(words)
+            # print(words)
             with open(words[self.csvfile], 'r') as file2: #open first csv file as file2 -- need to indicate based on order of csv file
                 readingcsv = csv.reader(file2)
                 self.all_data = []
@@ -130,9 +130,13 @@ class CS2PredictionDataset(Dataset):
             self.new_round = 1
             self.starting_index_of_round = prov_index
             if excess!= self.sequence_length:
-                x_main_data = P.pad(self.data,(0,0,excess,0), value=0)
-                x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,excess,0), value=0) 
-                x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,excess,0), value=0) 
+                # x_main_data = P.pad(self.data,(0,0,excess,0), value=0) # Left padding
+                # x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,excess,0), value=0) 
+                # x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,excess,0), value=0)
+
+                x_main_data = P.pad(self.data,(0,0,0,excess), value=0) # Right padding 
+                x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,0,excess), value=0) 
+                x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,0,excess), value=0)  
 
                 self.offset = excess
                 x_main_data = x_main_data[0:self.sequence_length]
@@ -150,16 +154,16 @@ class CS2PredictionDataset(Dataset):
            self.new_round = 0
 
         
-        if(prov_index <= 5):
-           # with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
-            #    torch.set_printoptions(threshold=torch.inf)
-            #    print(x_main_data, file = f)
-            with open('prim_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
-                torch.set_printoptions(threshold=torch.inf)
-                print(x_prim_data_weap, file = f)
-            with open('sec_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
-                torch.set_printoptions(threshold=torch.inf)
-                print(x_sec_data_weap, file = f)
+        # if(prov_index <= 5):
+        #    # with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
+        #     #    torch.set_printoptions(threshold=torch.inf)
+        #     #    print(x_main_data, file = f)
+        #     with open('prim_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+        #         torch.set_printoptions(threshold=torch.inf)
+        #         print(x_prim_data_weap, file = f)
+        #     with open('sec_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+        #         torch.set_printoptions(threshold=torch.inf)
+        #         print(x_sec_data_weap, file = f)
 
         #reload
         if(tensor_index + self.sequence_length ==  len(self.data) and self.csvfile != self.total_csv_files ):      
