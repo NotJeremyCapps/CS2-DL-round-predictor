@@ -25,13 +25,13 @@ class CS2LSTM(nn.Module):
 
         self.lstm = nn.LSTM(self.n_feature, self.n_hidden, self.n_layers, dropout=self.drop_prob, batch_first=True)
 
-        self.layer_norm = nn.LayerNorm()
+        # self.layer_norm = nn.LayerNorm()
 
         self.dropout = nn.Dropout(drop_prob)
 
         self.fc = nn.Linear(n_hidden, out_feature)
 
-    def forward(self, x, cat_data, hidden):
+    def forward(self, x_main_data, x_data_weap, hidden):
 
         # Embed categorical primary and secondary weapo s
         
@@ -43,6 +43,7 @@ class CS2LSTM(nn.Module):
 
         padded_sequences = rnn_utils.pad_sequence(x, batch_first=True)
 
+        
 
         x = rnn_utils.pack_padded_sequence(padded_sequences, lengths, batch_first=True, enforce_sorted=False)
 
