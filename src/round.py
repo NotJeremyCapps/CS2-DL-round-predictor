@@ -32,7 +32,8 @@ class Round:
         os.makedirs(self.preprocessed_dir_pth, exist_ok=True)
 
         self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
-        self.round_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds.txt")
+        self.round_train_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_train.txt")
+        self.round_test_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_train.txt")
 
         emun_file = open("enums.json", 'r')
         self.enums = json.loads(emun_file.read())
@@ -226,7 +227,7 @@ class Round:
         # self.df = pd.concat([self.df, norm_df, binaxry_df, embed_df], axis=1)
         
 
-    def write_round_to_csv(self):
+    def write_round_to_csv(self, text_file):
 
         # Normalize coordinates 
         # Map: de anubis
@@ -320,9 +321,11 @@ class Round:
         
 
         self.df.to_csv(self.csv_file, index=True)
-
-        with open(self.round_txt_file, "a") as f:
-            f.write(f"{self.csv_file}\n")
-
+        if(text_file == 0):
+            with open(self.round_test_txt_file, "a") as f:
+                f.write(f"{self.csv_file}\n")
+        else:
+            with open(self.round_train_txt_file, "a") as f:
+                f.write(f"{self.csv_file}\n")
 
         
