@@ -69,20 +69,28 @@ class CS2PredictionDataset(Dataset):
             
         #change into tensor
         self.data = torch.tensor(int_data) #data index 
-        
         #create prim/secondary weapon data as floats
-        int_data_weap = []
+        prim_data_weap = []
+        sec_data_weap = []
     
         for i in range(1, len(self.all_data)):#increment over every row
-            temp_array = []
-            for m in range(data_weap_ind,len(self.all_data[0])-1): #from prim/secondary data to win -- THIS 96 IS NOT CORRECt -SHOULD PROB AUTOMATE
+            prim_array = []
+            sec_array = []
+            for m in range(data_weap_ind,len(self.all_data[0])-1): #from prim/secondary data to win 
                     #convert to float
-                    temp_array.append(float(self.all_data[i][m])) 
+                    if(0 == (m-data_weap_ind)%2 ):
+                        prim_array.append(float(self.all_data[i][m])) 
+                    elif(1 == (m-data_weap_ind)%2):
+                        sec_array.append(float(self.all_data[i][m]))
                    
-            int_data_weap.append(temp_array)
+            prim_data_weap.append(prim_array)
+            sec_data_weap.append(sec_array)
             
         #change into tensor
-        self.data_weap = torch.tensor(int_data_weap) #data index 
+        self.prim_data_weap_t = torch.tensor(prim_data_weap) #data index 
+        self.sec_data_weap_t = torch.tensor(sec_data_weap) #data index 
+      
+
         self.offset = 0 #offset from padding
         self.csvfile += 1
 
@@ -123,10 +131,13 @@ class CS2PredictionDataset(Dataset):
             self.starting_index_of_round = prov_index
             if excess!= self.sequence_length:
                 x_main_data = P.pad(self.data,(0,0,excess,0), value=0)
-                x_data_weap = P.pad(self.data_weap,(0,0,excess,0), value=0) 
+                x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,excess,0), value=0) 
+                x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,excess,0), value=0) 
+
                 self.offset = excess
                 x_main_data = x_main_data[0:self.sequence_length]
-                x_data_weap = x_data_weap[0:self.sequence_length]
+                x_prim_data_weap = x_prim_data_weap[0:self.sequence_length]
+                x_sec_data_weap = x_sec_data_weap[0:self.sequence_length]
 
             
 
@@ -134,17 +145,21 @@ class CS2PredictionDataset(Dataset):
 
         else: 
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
-           x_data_weap = self.data_weap[tensor_index :tensor_index + self.sequence_length]
+           x_prim_data_weap = self.prim_data_weap_t[tensor_index :tensor_index + self.sequence_length]
+           x_sec_data_weap = self.sec_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            self.new_round = 0
 
-        if(prov_index == (146)):
-            with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
-                torch.set_printoptions(threshold=torch.inf)
-                print(x_main_data, file = f)
-            with open('dw_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
-                torch.set_printoptions(threshold=torch.inf)
-                print(x_data_weap, file = f)
         
+        if(prov_index <= 5):
+           # with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
+            #    torch.set_printoptions(threshold=torch.inf)
+            #    print(x_main_data, file = f)
+            with open('prim_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+                torch.set_printoptions(threshold=torch.inf)
+                print(x_prim_data_weap, file = f)
+            with open('sec_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+                torch.set_printoptions(threshold=torch.inf)
+                print(x_sec_data_weap, file = f)
 
         #reload
         if(tensor_index + self.sequence_length ==  len(self.data) and self.csvfile != self.total_csv_files ):      
@@ -154,7 +169,7 @@ class CS2PredictionDataset(Dataset):
         #self.new_round= torch.full((self.sequence_length,), (float(self.new_round)))
 
 
-        return self.target_for_round, x_main_data, x_data_weap, self.new_round
+        return self.target_for_round, self.new_round, x_main_data, x_prim_data_weap, x_sec_data_weap
     
     def __len__(self):
         return self.total_len 
