@@ -63,7 +63,7 @@ class CS2LSTM(nn.Module):
         valid_mask = x_data_combined.ne(0).any(dim=-1)  # Shape: (batch_size, seq_length)
     
         # Sum over the sequence dimension to count valid time steps
-        lengths = valid_mask.sum(dim=1)
+        lengths = valid_mask.sum(dim=1).cpu()
 
         # x.shape (batch, seq_len, n_features)
         x = rnn_utils.pack_padded_sequence(x_data_combined, lengths, batch_first=True, enforce_sorted=False)

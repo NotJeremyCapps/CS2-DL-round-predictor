@@ -45,11 +45,11 @@ class ModelTrainer():
         self.lossFunc = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.dataset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds.txt", sequence_length=self.seq_len)
+        self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds_train.txt", sequence_length=self.seq_len)
 
         # self.training_data, self.testing_data = torch.utils.data.random_split(data_set, [0.75, 0.25])
 
-        self.dataloader = DataLoader(dataset=self.dataset,
+        self.train_loader = DataLoader(dataset=self.trainset,
                                      batch_size=self.batch_size,
                                      num_workers=0,
                                      drop_last=True)
@@ -72,8 +72,10 @@ class ModelTrainer():
         num_preds = 0
 
         hidden = None
-        with tqdm(self.dataloader, unit="batch", leave=True) as tepoch:
+        with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
             for batch, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
+
+                target, new_round,x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
 
                 # need categorical data as ints for embedding
                 x_prim_weap, x_sec_weap = x_prim_weap.int(), x_sec_weap.int()

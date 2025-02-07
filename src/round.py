@@ -33,7 +33,7 @@ class Round:
 
         self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
         self.round_train_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_train.txt")
-        self.round_test_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_train.txt")
+        self.round_test_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_test.txt")
 
         emun_file = open("enums.json", 'r')
         self.enums = json.loads(emun_file.read())
@@ -44,43 +44,9 @@ class Round:
 
     def init_headers(self):
         self.df["game_tick"] = pd.Series(dtype=object)
-        # self.df["bomb_timer"] = pd.Series()
-        # self.df["bomb_x"] = pd.Series()
-        # self.df["bomb_y"] = pd.Series()
-        # self.df["bomb_z"] = pd.Series()
-        # self.df["game_tick"] = pd.Series()
 
-        # for player in players:
-        #     for attr in ['x', 'y', 'z', 'pitch', 'yaw', 'hp', 'flash_dur', 'has_helm', 'has_armor', 
-        #         'has_defuse', 'grenades']:
-        #         col_name = f"{player.player_name}_{attr}"
-        #         if col_name not in self.scaled_df.columns:
-        #             self.scaled_df[col_name] = pd.Series(dtype=float)
-        #             self.input_params_num += 1
-
-        #     for attr in ['primary', 'secondary']:
-        #         col_name = f"{player.player_name}_{attr}"
-        #         if col_name not in self.categorical_df.columns:
-        #             self.categorical_df[col_name] = pd.Series(dtype=int)
-        #             self.input_params_num += 1
-        pass
 
     def load_round_data(self, round_dict: dict):
-
-        # print(f"Winner: {round_dict['winner'][self.round_num]}")
-        # self.winner = round_dict['winner'][self.round_num]
-        # self.input_params_num += 1
-
-        # if str(round_dict['bomb_plant'][self.round_num]) != "<NA>":
-        #     self.bomb_plant_time = int(round_dict['bomb_plant'][self.round_num])
-        # else:
-        #     self.bomb_plant_time = None
-        # self.input_params_num += 1
-        
-        # print(f"Reason: {round_dict['reason'][self.round_num]}")
-        # self.reason = round_dict['reason'][self.round_num]
-        # self.input_params_num += 1
-
 
         info_dict = {}
         coord_dict = {}
@@ -135,9 +101,6 @@ class Round:
             elif(len(self.bomb_postion) == tick):
                 self.bomb_postion.append(self.bomb_postion[-1])
 
-        # Load game tick
-        # self.df['game_tick'] = pd.Series([tick for tick in range(round_dict['freeze_end'][self.round_num], round_dict['end'][self.round_num]+1)])
-
         # with open("round_class_info.txt", "a") as f:
         #     f.write(str(round_dict))
 
@@ -146,10 +109,7 @@ class Round:
         coord_dict["bomb_y"] = [pos[1] for pos in self.bomb_postion]
         coord_dict["bomb_z"] = [pos[2] for pos in self.bomb_postion]
 
-        # print(f"{round_dict['end'].values}, type: {round_dict['end'].dtype}")
 
-        # round_len = (round_dict['end'][self.round_num]+1) - (round_dict['freeze_end'][self.round_num])
-        # self.df['round_tick'] = list((range(round_dict['freeze_end'][self.round_num], round_dict['end'][self.round_num]+1) - round_dict['freeze_end'][self.round_num]))
         self.df["game_tick"] = list(range(round_dict['freeze_end'][self.round_num], round_dict['end'][self.round_num]+1) / round_dict['end'].values[-1])
 
         if 1 in self.bomb_planted: #only scale timer values if bomb planted
@@ -157,10 +117,6 @@ class Round:
         else:
             self.df[f"bomb_timer"] = self.bomb_timer
 
-
-        # self.other_dfs['round_df'] = pd.DataFrame(info_dict)
-
-        # print(f"Bomb pos length: {len(self.bomb_postion)}\n Bomb timer len: {len(self.bomb_timer)}\n, game tick len: {len(self.df["game_tick"])}\n, unscaled dict shape: {self.other_dfs['scaled_df'].shape}")
 
         self.other_dfs['coord_df'] = pd.concat([self.other_dfs['coord_df'], pd.DataFrame(coord_dict)], axis=1)
 
@@ -219,13 +175,7 @@ class Round:
 
         self.other_dfs['embed_df'] = pd.DataFrame(embed_dict)
 
-        # embed_df.to_csv("embed_df.csv", index=True)
 
-        # norm_df.to_csv("scaled_df.csv", index=True)
-
-
-        # self.df = pd.concat([self.df, norm_df, binaxry_df, embed_df], axis=1)
-        
 
     def write_round_to_csv(self, text_file):
 

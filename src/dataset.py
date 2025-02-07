@@ -112,12 +112,6 @@ class CS2PredictionDataset(Dataset):
         self.calc_len()
 
 
-
-
-
-    
-
-
     def __getitem__(self, prov_index): #index is beginning index of sequence, this assumes all the data for rounds and games is sequential
         #determines tensor index of round for total provided index/offset/seqence length
         self.index_of_round = prov_index - self.starting_index_of_round
@@ -142,10 +136,6 @@ class CS2PredictionDataset(Dataset):
                 x_main_data = x_main_data[0:self.sequence_length]
                 x_prim_data_weap = x_prim_data_weap[0:self.sequence_length]
                 x_sec_data_weap = x_sec_data_weap[0:self.sequence_length]
-
-            
-
-
 
         else: 
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
