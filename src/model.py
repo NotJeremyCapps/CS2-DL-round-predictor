@@ -43,10 +43,15 @@ class CS2LSTM(nn.Module):
         # x_prim_weap (batch_size, seq_len, 10(weapon of 10 player))
 
         # Pass through embedding layer
-        prim_weap_embed = self.prim_weap_embedding(x_prim_weap) 
-        sec_weap_embed = self.sec_weap_embedding(x_sec_weap) 
+        prim_weap_embed = self.prim_weap_embedding(x_prim_weap)#.to("cuda")
+        sec_weap_embed = self.sec_weap_embedding(x_sec_weap)#.to("cuda") 
+
+        print("prime: ", prim_weap_embed.get_device())
+        print("sec: ", sec_weap_embed.get_device())
 
         combined_embeds = torch.cat([prim_weap_embed, sec_weap_embed], dim=-1)  
+
+        print("emb: ", combined_embeds.get_device())
 
 
         B, T, num_players, embed_dim = combined_embeds.shape
@@ -56,20 +61,29 @@ class CS2LSTM(nn.Module):
         # x.shape (batch_size, seq_len, main_features + weapon_embeddings(276))
         x_data_combined = torch.cat([x_main_data, combined_embeds], dim=-1)
 
+        print("comb: ", x_data_combined.get_device())
+
         # with open("prim_weap_embed.txt", "a") as f: 
         #     f.write(f"Prim embedding: {x_main_data}, Shape: {x_main_data.shape}")
 
     # find lengths of valid data in padded sequences
         valid_mask = x_data_combined.ne(0).any(dim=-1)  # Shape: (batch_size, seq_length)
+
+        print("mask: ", valid_mask.get_device())
     
         # Sum over the sequence dimension to count valid time steps
         lengths = valid_mask.sum(dim=1)
 
+        print("len: ", lengths.get_device())
+
         # x.shape (batch, seq_len, n_features)
+
+        #I think padded pack sequence is causing tensor issues with GPU
+        print("TEST")
         x = rnn_utils.pack_padded_sequence(x_data_combined, lengths, batch_first=True, enforce_sorted=False)
-
+        
         l_out, l_hidden = self.lstm(x, hidden)
-
+        
         # unpack
         l_unpacked, _ = rnn_utils.pad_packed_sequence(l_out, batch_first=True)
 
@@ -91,8 +105,8 @@ class CS2LSTM(nn.Module):
         weight = next(self.parameters()).data
 
         if torch.cuda.is_available():
-            hidden = (weight.new(self.n_layers, batch_size, self.n_hidden).zero_().cuda(),
-                      weight.new(self.n_layers, batch_size, self.n_hidden).zero_().cuda())
+            hidden = (weight.new(self.n_layers, batch_size, self.n_hidden).zero_(),#.cuda(),
+                      weight.new(self.n_layers, batch_size, self.n_hidden).zero_())#.cuda())
         else: 
             hidden = (weight.new(self.n_layers, batch_size, self.n_hidden).zero_(),
                       weight.new(self.n_layers, batch_size, self.n_hidden).zero_())

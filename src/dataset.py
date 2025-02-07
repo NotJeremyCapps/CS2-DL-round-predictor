@@ -41,7 +41,7 @@ class CS2PredictionDataset(Dataset):
                     self.all_data.append(row) #first index is row and then col
 
         #create target tensor  
-        self.target_for_round= torch.tensor((float(self.all_data[1][-1])))
+        self.target_for_round= torch.tensor((float(self.all_data[1][-1]))).to(self.device)
 
         #self.target_for_round= torch.full((self.sequence_length,), (float(self.all_data[1][-1])))
 
@@ -68,7 +68,7 @@ class CS2PredictionDataset(Dataset):
             int_data.append(temp_array)
             
         #change into tensor
-        self.data = torch.tensor(int_data) #data index 
+        self.data = torch.tensor(int_data).to(self.device)#data index 
         #create prim/secondary weapon data as floats
         prim_data_weap = []
         sec_data_weap = []
@@ -87,8 +87,8 @@ class CS2PredictionDataset(Dataset):
             sec_data_weap.append(sec_array)
             
         #change into tensor
-        self.prim_data_weap_t = torch.tensor(prim_data_weap) #data index 
-        self.sec_data_weap_t = torch.tensor(sec_data_weap) #data index 
+        self.prim_data_weap_t = torch.tensor(prim_data_weap).to(self.device) #data index 
+        self.sec_data_weap_t = torch.tensor(sec_data_weap).to(self.device) #data index 
       
 
         self.offset = 0 #offset from padding
@@ -96,6 +96,10 @@ class CS2PredictionDataset(Dataset):
 
 
     def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
+
+
+        self.device = torch.device("cpu")#"cuda" if torch.cuda.is_available() else "cpu")
+
 
         #sets amount of data points/ticks for each sequence
         self.sequence_length= sequence_length

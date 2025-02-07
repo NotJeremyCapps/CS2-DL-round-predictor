@@ -28,9 +28,14 @@ class ModelTrainer():
 
         self.seq_len = 60
 
+        print("device avail: ", torch.cuda.is_available())
+
+        self.device = torch.device("cpu")#"cuda" if torch.cuda.is_available() else "cpu")
+
+        print("dev: ", self.device)
+
         self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=self.seq_len,n_layers=2)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
         if torch.cuda.device_count() > 1:
@@ -38,6 +43,9 @@ class ModelTrainer():
             self.model = torch.nn.DataParallel(self.model)  # Wrap model for multi-GPU
 
         # hidden = self.model.hidden_init() #initialize hidden variable
+
+        print("cuda devices: ",torch.cuda.device_count())
+        print("device name: ",torch.cuda.get_device_name(0))
 
         self.model.to(self.device)  # Move model to GPUs
 
@@ -81,7 +89,13 @@ class ModelTrainer():
                 #     print(f"Target: {target}, Shape: {target.size()};\n Main_data: {x_main_data}, Shape: {x_main_data.size()};\n Weapon_data: {x_prim_weap}, Shape: {x_prim_weap.size()};\n New_Round: {new_round}, Shape: {new_round.shape};\n\n\n", file = f)
         
 
-                out, hidden = self.model(x_main_data, x_prim_weap, x_sec_weap, hidden) #hidden is info from past
+                print("xprim: ", x_prim_weap.get_device())
+                print("xsec: ", x_sec_weap.get_device())
+                print("xmain: ", x_main_data.get_device())
+                #print("hidden: ", type(hidden))
+
+                
+                out, hidden = self.model(x_main_data, x_prim_weap, x_sec_weap, hidden) #hidden is info from past, error on this line
 
                 out = out.squeeze() # Output comes out of self.model (batch_size, 1) for some reason
 
@@ -95,7 +109,7 @@ class ModelTrainer():
 
                 # sets prediction depending on whether is above of below 0.5 thresh
                 binary_preds = (out > 0.5).float()  # Converts to 0 or 1
-
+                
                 # Compute accuracy
                 correct += (binary_preds == target).int().sum()
 
