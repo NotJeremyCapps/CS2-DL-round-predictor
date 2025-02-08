@@ -149,20 +149,20 @@ class CS2PredictionDataset(Dataset):
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
            x_prim_data_weap = self.prim_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            x_sec_data_weap = self.sec_data_weap_t[tensor_index :tensor_index + self.sequence_length]
-           self.new_round = 0 #indicate current round is not new round
-
+           self.new_round = 0
+        '''
         
-        # if(prov_index <= 5):
-        #    # with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
-        #     #    torch.set_printoptions(threshold=torch.inf)
-        #     #    print(x_main_data, file = f)
-        #     with open('prim_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
-        #         torch.set_printoptions(threshold=torch.inf)
-        #         print(x_prim_data_weap, file = f)
-        #     with open('sec_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
-        #         torch.set_printoptions(threshold=torch.inf)
-        #         print(x_sec_data_weap, file = f)
-
+        if(prov_index <= 5):
+           # with open('md_tensor_output' + str(prov_index) + '.txt', 'w') as f:
+            #    torch.set_printoptions(threshold=torch.inf)
+            #    print(x_main_data, file = f)
+            with open('prim_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+                torch.set_printoptions(threshold=torch.inf)
+                print(x_prim_data_weap, file = f)
+            with open('sec_tensor_output' + str(prov_index) + '.txt', 'w') as f:    
+                torch.set_printoptions(threshold=torch.inf)
+                print(x_sec_data_weap, file = f)
+            '''
         #reload
         if(tensor_index + self.sequence_length == len(self.data) and self.csvfile != self.total_csv_files ):      
             self.load_tensors()
@@ -175,5 +175,42 @@ class CS2PredictionDataset(Dataset):
     
     def __len__(self):
         return self.total_len 
+
+def split(percent):
+    demo_data_root="../game_demos"
+    round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
+    round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")
+    with open("../game_demos/preprocessed/rounds.txt", "r") as file1:
+        lines = file1.readlines()
+
+    total_games = 0
+    current_game_name_total = ''
+    for line in lines:
+        #print(line)
+        if current_game_name_total and current_game_name_total in line:
+         
+            continue
+        else:
+            total_games +=1
+            current_game_name_total = line[0:-6]
+
+    current_game_name = ''
+    current_game_count = 0
+    with open(round_train_txt_file, "a") as train_file, open(round_test_txt_file, "a") as test_file:
+
+        for line in lines:
+            if current_game_name and current_game_name in line:
+                pass
+            else:
+                current_game_count += 1
+                current_game_name = line[:-6]
+
+            
+            if((current_game_count/total_games) < percent):
+                train_file.write(line)
+            else:
+                test_file.write(line)
+
+        
 
 

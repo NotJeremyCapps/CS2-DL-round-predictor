@@ -32,8 +32,10 @@ class Round:
         os.makedirs(self.preprocessed_dir_pth, exist_ok=True)
 
         self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
-        self.round_train_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_train.txt")
-        self.round_test_txt_file = os.path.join(self.preprocessed_dir_pth, f"rounds_test.txt")
+        self.round_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds.txt")
+
+        #self.round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
+        #self.round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")
 
         emun_file = open("enums.json", 'r')
         self.enums = json.loads(emun_file.read())
@@ -177,7 +179,7 @@ class Round:
 
 
 
-    def write_round_to_csv(self, text_file):
+    def write_round_to_csv(self):
 
         # Normalize coordinates 
         # Map: de anubis
@@ -271,11 +273,13 @@ class Round:
         
 
         self.df.to_csv(self.csv_file, index=True)
-        if(text_file == 0):
-            with open(self.round_test_txt_file, "a") as f:
-                f.write(f"{self.csv_file}\n")
-        else:
-            with open(self.round_train_txt_file, "a") as f:
-                f.write(f"{self.csv_file}\n")
+        with open(self.round_txt_file, "a") as f:
+            f.write(f"{self.csv_file}\n")
+        #if(text_file == 0):
+        #    with open(self.round_test_txt_file, "a") as f:
+        #        f.write(f"{self.csv_file}\n")
+        #else:
+        #    with open(self.round_train_txt_file, "a") as f:
+        #        f.write(f"{self.csv_file}\n")
 
         
