@@ -128,7 +128,7 @@ def main():
             try:
                 game[round_num-skip_counter].load_player_tick_data(players=players)
                 game[round_num-skip_counter].load_round_data(round_dict=parser.rounds)
-                game[round_num-skip_counter].write_round_to_csv(i%2)
+                game[round_num-skip_counter].write_round_to_csv()
             except Exception as e:
                 print(f"Couldnt load round, Error: {e}")
        
