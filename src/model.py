@@ -37,9 +37,8 @@ class CS2LSTM(nn.Module):
 
     def forward(self, x_main_data, x_prim_weap, x_sec_weap, hidden):
 
-        # Embed categorical primary and secondary weapo s
+        # Embed categorical primary and secondary weapons
         
-
         # x_prim_weap (batch_size, seq_len, 10(weapon of 10 player))
 
         # Pass through embedding layer
@@ -54,27 +53,27 @@ class CS2LSTM(nn.Module):
 
 
         # x.shape (batch_size, seq_len, main_features + weapon_embeddings(276))
-        x_data_combined = torch.cat([x_main_data, combined_embeds], dim=-1)
+        x = torch.cat([x_main_data, combined_embeds], dim=-1)
 
         # with open("prim_weap_embed.txt", "a") as f: 
         #     f.write(f"Prim embedding: {x_main_data}, Shape: {x_main_data.shape}")
 
     # find lengths of valid data in padded sequences
-        valid_mask = x_data_combined.ne(0).any(dim=-1)  # Shape: (batch_size, seq_length)
+        # valid_mask = x_data_combined.ne(0).any(dim=-1)  # Shape: (batch_size, seq_length)
     
         # Sum over the sequence dimension to count valid time steps
-        lengths = valid_mask.sum(dim=1).cpu()
+        # lengths = valid_mask.sum(dim=1).cpu()
 
         # x.shape (batch, seq_len, n_features)
-        x = rnn_utils.pack_padded_sequence(x_data_combined, lengths, batch_first=True, enforce_sorted=False)
+        # x = rnn_utils.pack_padded_sequence(x_data_combined, lengths, batch_first=True, enforce_sorted=False)
 
         l_out, l_hidden = self.lstm(x, hidden)
 
         # unpack
-        l_unpacked, _ = rnn_utils.pad_packed_sequence(l_out, batch_first=True)
+        # l_unpacked, _ = rnn_utils.pad_packed_sequence(l_out, batch_first=True)
 
         # out.shape (batch, hidden_size, hidden_size)
-        out = self.dropout(l_unpacked)
+        out = self.dropout(l_out)
 
         # with open("dropoutput.txt", "a") as f: 
         #     f.write(f"Dropout out: {out}, Shape: {out.shape}")

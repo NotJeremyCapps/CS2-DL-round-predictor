@@ -73,14 +73,14 @@ class ModelTrainer():
 
         hidden = None
         with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
-            for batch, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
+            for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
 
-                target, new_round,x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
+                target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
 
                 # need categorical data as ints for embedding
                 x_prim_weap, x_sec_weap = x_prim_weap.int(), x_sec_weap.int()
-                # with open('passedtotraining_seq3.txt', 'a') as f:
-                #     print(f"Target: {target}, Shape: {target.size()};\n Main_data: {x_main_data}, Shape: {x_main_data.size()};\n Weapon_data: {x_prim_weap}, Shape: {x_prim_weap.size()};\n New_Round: {new_round}, Shape: {new_round.shape};\n\n\n", file = f)
+                with open('batch_data.txt', 'a') as f:
+                    print(f"Target: {target}, Shape: {target.size()};\n Main_data: {x_main_data}, Shape: {x_main_data.size()};\n Weapon_data: {x_prim_weap}, Shape: {x_prim_weap.size()};\n New_Round: {new_round}, Shape: {new_round.shape};\n\n\n", file = f)
         
 
                 out, hidden = self.model(x_main_data, x_prim_weap, x_sec_weap, hidden) #hidden is info from past
@@ -115,7 +115,7 @@ class ModelTrainer():
                 metric_dict["loss"] = loss.item()
                 metric_dict["acc"] = accuracy
 
-                self.log_scalars("train", metric_dict, batch)
+                self.log_scalars("train", metric_dict, batch_idx)
 
             print(f"Predictions total: {num_preds} guesses: {correct}/{total}")
         

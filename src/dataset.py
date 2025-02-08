@@ -85,6 +85,9 @@ class CS2PredictionDataset(Dataset):
                    
             prim_data_weap.append(prim_array)
             sec_data_weap.append(sec_array)
+        
+        # with open('batch_data.txt', 'a') as f:
+        #     print(f"Loading tensors!! All Data: {self.all_data}, Shape: {len(self.all_data)};\n\n\n", file = f)
             
         #change into tensor
         self.prim_data_weap_t = torch.tensor(prim_data_weap) #data index 
@@ -93,6 +96,7 @@ class CS2PredictionDataset(Dataset):
 
         self.offset = 0 #offset from padding
         self.csvfile += 1
+        self.new_round = 2
 
 
     def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
@@ -106,7 +110,7 @@ class CS2PredictionDataset(Dataset):
         self.list = list
         #read in csv
         
-        self.new_round = 1
+        self.new_round = 2
 
         self.load_tensors()
         self.calc_len()
@@ -119,29 +123,33 @@ class CS2PredictionDataset(Dataset):
         len_of_round = len(self.data)
 
         excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
-        if self.offset == 0: #tick needs to be padded if there is excess frames and 0 offset
-            #indicate new round
-            self.new_round = 1
+        if self.new_round == 2: #check for padding if in a new round
+            self.new_round += 1  #decrement to indicate next round is not a new round but current one is 
             self.starting_index_of_round = prov_index
             if excess!= self.sequence_length:
-                # x_main_data = P.pad(self.data,(0,0,excess,0), value=0) # Left padding
-                # x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,excess,0), value=0) 
-                # x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,excess,0), value=0)
+                x_main_data = P.pad(self.data,(0,0,excess,0), value=0) # Left padding
+                x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,excess,0), value=0) 
+                x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,excess,0), value=0)
 
-                x_main_data = P.pad(self.data,(0,0,0,excess), value=0) # Right padding 
-                x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,0,excess), value=0) 
-                x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,0,excess), value=0)  
+                # x_main_data = P.pad(self.data,(0,0,0,excess), value=0) # Right padding 
+                # x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,0,excess), value=0) 
+                # x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,0,excess), value=0)  
 
                 self.offset = excess
                 x_main_data = x_main_data[0:self.sequence_length]
                 x_prim_data_weap = x_prim_data_weap[0:self.sequence_length]
                 x_sec_data_weap = x_sec_data_weap[0:self.sequence_length]
+            else:
+                x_main_data = self.data[0:self.sequence_length]
+                x_prim_data_weap = self.prim_data_weap_t[0 : self.sequence_length]
+                x_sec_data_weap = self.sec_data_weap_t[0:self.sequence_length]
+
 
         else: 
            x_main_data = self.data[tensor_index :tensor_index + self.sequence_length]
            x_prim_data_weap = self.prim_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            x_sec_data_weap = self.sec_data_weap_t[tensor_index :tensor_index + self.sequence_length]
-           self.new_round = 0
+           self.new_round = 0 #indicate current round is not new round
 
         
         # if(prov_index <= 5):
@@ -156,7 +164,7 @@ class CS2PredictionDataset(Dataset):
         #         print(x_sec_data_weap, file = f)
 
         #reload
-        if(tensor_index + self.sequence_length ==  len(self.data) and self.csvfile != self.total_csv_files ):      
+        if(tensor_index + self.sequence_length == len(self.data) and self.csvfile != self.total_csv_files ):      
             self.load_tensors()
 
         #create tensor for new round
