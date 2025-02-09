@@ -10,6 +10,7 @@ from tqdm import tqdm
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 import math
+import os
 
 
 from dataset import CS2PredictionDataset
@@ -28,6 +29,15 @@ class ModelTrainer():
         self.batch_size = 28
 
         self.seq_len = 60
+
+        os.environ['USE_LIBUV'] = '0'
+        os.environ['MASTER_ADDR'] = 'localhost'  # Set address
+        os.environ['MASTER_PORT'] = '13377'  # Set port
+        os.environ["WORLD_SIZE"] = str(torch.cuda.device_count())
+        os.environ["RANK"] = str(cudaID)
+
+        #maybe switch gloo for nccl when on linux system
+        dist.init_process_group("gloo", rank=cudaID, world_size=torch.cuda.device_count())
 
         self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=self.seq_len,n_layers=2)
 
@@ -49,6 +59,8 @@ class ModelTrainer():
         # hidden = self.model.hidden_init() #initialize hidden variable
 
         self.model.to(self.device)  # Move model to GPU
+
+        self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[cudaID])
         #print("MODELDEV: ", self.model.get_device())
 
 
@@ -77,103 +89,62 @@ class ModelTrainer():
             self.writer.add_scalar(f"{global_tag}/{tag}", value, global_step)
 
     def train(self, epoch): #loss function and optimizer should be prebuilt functions
-
         self.model.train() #inherited function from model.py, sets model in training modes
 
         metric_dict = {}
         total = 0
         correct = 0
         num_preds = 0
-        #loss = 0
-        binary_preds = []
-        hidden = None
-    
-        with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
-            for batch, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
+        out = 0
 
-                #for i in range(torch.cuda.device_count()):
-                #target, new_round,x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
+        hidden = None
+        with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
+            for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
+
+                target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
 
                 # need categorical data as ints for embedding
                 x_prim_weap, x_sec_weap = x_prim_weap.int(), x_sec_weap.int()
-                # with open('passedtotraining_seq3.txt', 'a') as f:
-                #     print(f"Target: {target}, Shape: {target.size()};\n Main_data: {x_main_data}, Shape: {x_main_data.size()};\n Weapon_data: {x_prim_weap}, Shape: {x_prim_weap.size()};\n New_Round: {new_round}, Shape: {new_round.shape};\n\n\n", file = f)
+                with open('batch_data.txt', 'a') as f:
+                    print(f"Target: {target}, Shape: {target.size()};\n Main_data: {x_main_data}, Shape: {x_main_data.size()};\n Weapon_data: {x_prim_weap}, Shape: {x_prim_weap.size()};\n New_Round: {new_round}, Shape: {new_round.shape};\n\n\n", file = f)
+        
 
+                out, hidden = self.model(x_main_data, x_prim_weap, x_sec_weap, hidden) #hidden is info from past
 
-                #out = []
+                out = out.squeeze() # Output comes out of self.model (batch_size, 1) for some reason
 
-                hidden = []
+                num_preds += len(out)
 
+                loss = self.lossFunc(out, target.float())
 
-                targets = torch.split(target, math.ceil(self.batch_size/torch.cuda.device_count()))
-                new_rounds = torch.split(new_round, math.ceil(self.batch_size/torch.cuda.device_count()))
-                x_main_datas = torch.split(x_main_data, math.ceil(self.batch_size/torch.cuda.device_count()))
-                x_prim_weaps = torch.split(x_prim_weap, math.ceil(self.batch_size/torch.cuda.device_count()))
-                x_sec_weaps = torch.split(x_sec_weap, math.ceil(self.batch_size/torch.cuda.device_count()))
-                
-                targets_list = []
-                new_rounds_list = []
-                x_main_datas_list = []
-                x_prim_weaps_list = []
-                x_sec_weaps_list = []
+                self.optimizer.zero_grad() #zeros grad from previous run
+                loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
+                self.optimizer.step()#changes weights and bias of parameters based on loss
 
-
-                for i in range(len(self.devices)):
-                    targets_list.append(targets[i].to(self.devices[i]))
-                    new_rounds_list.append(new_rounds[i].to(self.devices[i]))
-                    x_main_datas_list.append(x_main_datas[i].to(self.devices[i]))
-                    x_prim_weaps_list.append(x_prim_weaps[i].to(self.devices[i]))
-                    x_sec_weaps_list.append(x_sec_weaps[i].to(self.devices[i]))
-                    hidden.append(None)
-                    print("i: ", i)
-
-                print("BEFORE")
-
-                for i in range(len(self.devices)):
-                    print(self.devices[i])
-
-                    print("targets")
-                    #out.append(None)
-                    #hidden.append(None)
-
-                    out, hidden[i] = self.model(x_main_datas_list[i], x_prim_weaps_list[i], x_sec_weaps_list[i], hidden[i]) #hidden is info from past
-
-                    out = out.squeeze() # Output comes out of self.model (batch_size, 1) for some reason
-
-                    num_preds += len(out)
-
-                    loss = 0
-
-                    loss += self.lossFunc(out, targets_list[i].float())
-
-                    self.optimizer.zero_grad() #zeros grad from previous run
-                    loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
-                    self.optimizers[i].step()#changes weights and bias of parameters based on loss
-
-                    # sets prediction depending on whether is above of below 0.5 thresh
-                    binary_preds.append((out > 0.5).float())  # Converts to 0 or 1
+                # sets prediction depending on whether is above of below 0.5 thresh
+                binary_preds = (out > 0.5).float()  # Converts to 0 or 1
 
                 # Compute accuracy
-                    correct += (binary_preds[i] == targets_list[i]).int().sum()
+                correct += (binary_preds == target).int().sum()
 
-                    accuracy = (binary_preds[i] == targets_list[i]).float().mean()
+                accuracy = (binary_preds == target).float().mean()
 
-                    if True in new_rounds_list[i]:
-                        hidden[i] = self.model.module.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
-                    else: 
-                        hidden[i] = (hidden[i][0].detach(), hidden[i][1].detach()) # detach if maintaining to next batch
+                if True in new_round:
+                    hidden = self.model.module.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
+                else: 
+                    hidden = (hidden[0].detach(), hidden[1].detach()) # detach if maintaining to next batch
 
-                    tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
+                tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
 
-                    total += self.batch_size # TODO: delete
+                total += self.batch_size # TODO: delete
 
-                    metric_dict["loss"] = loss.item()
-                    metric_dict["acc"] = accuracy
+                metric_dict["loss"] = loss.item()
+                metric_dict["acc"] = accuracy
 
-                    self.log_scalars("train", metric_dict, batch)
+                self.log_scalars("train", metric_dict, batch_idx)
 
             print(f"Predictions total: {num_preds} guesses: {correct}/{total}")
-        
+
 
 
     def test(self, epoch):
@@ -207,6 +178,8 @@ def createModel(deviceID):
 
 #mt = ModelTrainer()
 if __name__ == "__main__":
+    print("TORCHVERSION: ", torch.__version__)
+    print("NCCL: ", torch.distributed.is_nccl_available())
     num_gpu = torch.cuda.device_count()
     torch.multiprocessing.spawn(createModel, nprocs=num_gpu)
 
