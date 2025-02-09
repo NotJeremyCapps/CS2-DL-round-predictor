@@ -21,7 +21,7 @@ from model import CS2LSTM
 
 class ModelTrainer():
 
-    def __init__(self):
+    def __init__(self, cudaID):
 
         self.total_epochs = 20 
 
@@ -31,22 +31,24 @@ class ModelTrainer():
 
         self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=self.seq_len,n_layers=2)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.devices = []
+        self.device = "cuda:" + str(cudaID)
 
-        for i in range(torch.cuda.device_count()):
-            self.devices.append("cuda:" + str(i))
+        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.devices = []
 
-        print("devices!: ",self.devices)
+        #for i in range(torch.cuda.device_count()):
+        #    self.devices.append("cuda:" + str(i))
+
+        #print("devices!: ",self.devices)
 
 
-        if torch.cuda.device_count() > 1:
-            print(f"Using {torch.cuda.device_count()} GPUs!")
-            self.model = torch.nn.DataParallel(self.model)  # Wrap model for multi-GPU
+        #if torch.cuda.device_count() > 1:
+        #    print(f"Using {torch.cuda.device_count()} GPUs!")
+        #    self.model = torch.nn.DataParallel(self.model)  # Wrap model for multi-GPU
 
         # hidden = self.model.hidden_init() #initialize hidden variable
 
-        self.model.to(self.devices[0])  # Move model to GPUs
+        self.model.to(self.device)  # Move model to GPU
         #print("MODELDEV: ", self.model.get_device())
 
 
@@ -54,8 +56,8 @@ class ModelTrainer():
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
         self.optimizers = []
 
-        for i in range(len(self.devices)):
-            self.optimizers.append(optim.Adam(self.model.parameters(), lr=0.001))
+        #for i in range(len(self.devices)):
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
         self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds.txt", sequence_length=self.seq_len)
 
@@ -100,7 +102,7 @@ class ModelTrainer():
 
                 #out = []
 
-                #hidden = []
+                hidden = []
 
 
                 targets = torch.split(target, math.ceil(self.batch_size/torch.cuda.device_count()))
@@ -122,6 +124,7 @@ class ModelTrainer():
                     x_main_datas_list.append(x_main_datas[i].to(self.devices[i]))
                     x_prim_weaps_list.append(x_prim_weaps[i].to(self.devices[i]))
                     x_sec_weaps_list.append(x_sec_weaps[i].to(self.devices[i]))
+                    hidden.append(None)
                     print("i: ", i)
 
                 print("BEFORE")
@@ -133,7 +136,7 @@ class ModelTrainer():
                     #out.append(None)
                     #hidden.append(None)
 
-                    out, hidden = self.model(x_main_datas_list[i], x_prim_weaps_list[i], x_sec_weaps_list[i], hidden) #hidden is info from past
+                    out, hidden[i] = self.model(x_main_datas_list[i], x_prim_weaps_list[i], x_sec_weaps_list[i], hidden[i]) #hidden is info from past
 
                     out = out.squeeze() # Output comes out of self.model (batch_size, 1) for some reason
 
@@ -156,9 +159,9 @@ class ModelTrainer():
                     accuracy = (binary_preds[i] == targets_list[i]).float().mean()
 
                     if True in new_rounds_list[i]:
-                        hidden = self.model.module.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
+                        hidden[i] = self.model.module.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
                     else: 
-                        hidden = (hidden[0].detach(), hidden[1].detach()) # detach if maintaining to next batch
+                        hidden[i] = (hidden[i][0].detach(), hidden[i][1].detach()) # detach if maintaining to next batch
 
                     tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
 
@@ -198,6 +201,13 @@ class ModelTrainer():
 
 
 
-mt = ModelTrainer()
+def createModel(deviceID):
+    mt = ModelTrainer(deviceID)
+    mt.train_model()
 
-mt.train_model()
+#mt = ModelTrainer()
+if __name__ == "__main__":
+    num_gpu = torch.cuda.device_count()
+    torch.multiprocessing.spawn(createModel, nprocs=num_gpu)
+
+#mt.train_model()
