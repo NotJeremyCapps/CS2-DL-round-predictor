@@ -37,7 +37,13 @@ class CS2PredictionDataset(Dataset):
 
     def load_tensors(self):
         with open(self.list, 'r') as file1: #open text file to list of csv files
-            words = file1.read().strip().split()
+            words_total = file1.read().strip().split()
+            words = []
+
+            for i in range(len(words_total)):
+                if(i % self.num_gpu == self.gpu_index):
+                    words.append(words_total[i])
+                    
             self.total_csv_files = len(words)
             # print(words)
             with open(words[self.csvfile], 'r') as file2: #open first csv file as file2 -- need to indicate based on order of csv file
