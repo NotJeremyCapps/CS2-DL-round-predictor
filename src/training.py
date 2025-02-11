@@ -74,6 +74,10 @@ class ModelTrainer():
         hidden = None
         with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
             for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
+                
+                print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
+                if x_main_data.size(1) == 0: 
+                    continue
 
                 target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
 
