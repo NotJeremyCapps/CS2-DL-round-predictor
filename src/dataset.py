@@ -97,6 +97,8 @@ class CS2PredictionDataset(Dataset):
         self.offset = 0 #offset from padding
         self.csvfile += 1
         self.new_round = 2
+        self.overlap_offset = 0
+
 
 
     def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
@@ -121,11 +123,13 @@ class CS2PredictionDataset(Dataset):
             self.starting_index_of_round = 0
             self.csvfile = 0
             self.load_tensors()
+            self.overlap_offset = 0
 
         
         #determines tensor index of round for total provided index/offset/seqence length
-        self.index_of_round = prov_index - self.starting_index_of_round
-        tensor_index = self.index_of_round *self.sequence_length - self.offset
+        self.index_of_round = prov_index - self.starting_index_of_round #starting index is the provided index for a new round
+        tensor_index = self.index_of_round *self.sequence_length - self.offset -self.overlap_offset
+
         len_of_round = len(self.data)
 
         excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
@@ -156,6 +160,7 @@ class CS2PredictionDataset(Dataset):
            x_prim_data_weap = self.prim_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            x_sec_data_weap = self.sec_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            self.new_round = 0
+           self.overlap_offset = round(self.sequence_length/2) + self.overlap_offset
         '''
         
         if(prov_index <= 5):
@@ -176,8 +181,13 @@ class CS2PredictionDataset(Dataset):
         #create tensor for new round
         #self.new_round= torch.full((self.sequence_length,), (float(self.new_round)))
 
+        if(self.new_round == 2):
+            new_round_output = 0
+        
+        else:
+            new_round_output = self.new_round
 
-        return self.target_for_round, self.new_round, x_main_data, x_prim_data_weap, x_sec_data_weap
+        return self.target_for_round, new_round_output, x_main_data, x_prim_data_weap, x_sec_data_weap
     
     def __len__(self):
         return self.total_len 
