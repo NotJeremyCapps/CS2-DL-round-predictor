@@ -110,13 +110,19 @@ class CS2PredictionDataset(Dataset):
         self.list = list
         #read in csv
         
-        self.new_round = 2
 
-        self.load_tensors()
+        #self.load_tensors()
         self.calc_len()
 
 
     def __getitem__(self, prov_index): #index is beginning index of sequence, this assumes all the data for rounds and games is sequential
+        #reset and load for first index
+        if prov_index == 0:
+            self.starting_index_of_round = 0
+            self.csvfile = 0
+            self.load_tensors()
+
+        
         #determines tensor index of round for total provided index/offset/seqence length
         self.index_of_round = prov_index - self.starting_index_of_round
         tensor_index = self.index_of_round *self.sequence_length - self.offset
@@ -124,7 +130,7 @@ class CS2PredictionDataset(Dataset):
 
         excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
         if self.new_round == 2: #check for padding if in a new round
-            self.new_round += 1  #decrement to indicate next round is not a new round but current one is 
+            self.new_round -= 1  #decrement to indicate next round is not a new round but current one is 
             self.starting_index_of_round = prov_index
             if excess!= self.sequence_length:
                 x_main_data = P.pad(self.data,(0,0,excess,0), value=0) # Left padding
