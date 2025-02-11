@@ -71,7 +71,7 @@ class ModelTrainer():
         #for i in range(len(self.devices)):
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds.txt", sequence_length=self.seq_len)
+        self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds.txt", sequence_length=self.seq_len, gpu_index=cudaID, num_gpu=torch.cuda.device_count())
 
         # self.training_data, self.testing_data = torch.utils.data.random_split(data_set, [0.75, 0.25])
 

@@ -15,7 +15,13 @@ class CS2PredictionDataset(Dataset):
         csv_count = 0
         self.total_len = 0
         with open(self.list, 'r') as file1: #open text file to list of csv files
-            words = file1.read().strip().split()
+            words_total = file1.read().strip().split()
+            words = []
+
+            for i in range(len(words_total)):
+                if(i % self.num_gpu == self.gpu_index):
+                    words.append(words_total[i])
+
             while(csv_count < len(words)):
                 with open(words[csv_count], 'r') as file2: #open first csv file as file2
                     readingcsv = csv.reader(file2)
@@ -95,12 +101,14 @@ class CS2PredictionDataset(Dataset):
         self.csvfile += 1
 
 
-    def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
+    def __init__(self, list, sequence_length, gpu_index, num_gpu): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
 
         #sets amount of data points/ticks for each sequence
         self.sequence_length= sequence_length
         self.starting_index_of_round = 0
 
+        self.gpu_index = gpu_index
+        self.num_gpu = num_gpu
 
         self.csvfile = 0
         self.list = list
