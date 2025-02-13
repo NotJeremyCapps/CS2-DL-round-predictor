@@ -22,7 +22,11 @@ class CS2PredictionDataset(Dataset):
                     current_data = []
                     for row in readingcsv: 
                         current_data.append(row) #first index is row and then col
-                    self.total_len = self.total_len + math.ceil((len(current_data) - 1)/self.sequence_length) #remove first row for column titles
+                    #self.total_len = self.total_len + (math.ceil((len(current_data) - 1)/self.sequence_length))
+                    self.total_len = self.total_len + (math.ceil((len(current_data) - 1)/self.sequence_length)*self.overlap -2) #remove first row for column titles
+                    #*2-2 to account for the overalp of 50% except for the first index
+                    #ceiling accounts fo padded data
+
 
                     #if((len(current_data)-1)%self.sequence_length != 0):
                     #    total_len += 1
@@ -103,6 +107,8 @@ class CS2PredictionDataset(Dataset):
 
     def __init__(self, list, sequence_length): #a data point is one tick/timestamp, target is win/loss, data is parameter data, sequence_length eg 30 seconds 
 
+        self.overlap = 2 #eg 2 means that half of the sequences will overlap
+
         #sets amount of data points/ticks for each sequence
         self.sequence_length= sequence_length
         self.starting_index_of_round = 0
@@ -160,7 +166,7 @@ class CS2PredictionDataset(Dataset):
            x_prim_data_weap = self.prim_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            x_sec_data_weap = self.sec_data_weap_t[tensor_index :tensor_index + self.sequence_length]
            self.new_round = 0
-           self.overlap_offset = round(self.sequence_length/2) + self.overlap_offset
+           self.overlap_offset = round(self.sequence_length/self.overlap) + self.overlap_offset
         '''
         
         if(prov_index <= 5):
@@ -175,7 +181,7 @@ class CS2PredictionDataset(Dataset):
                 print(x_sec_data_weap, file = f)
             '''
         #reload
-        if(tensor_index + self.sequence_length == len(self.data) and self.csvfile != self.total_csv_files ):      
+        if(tensor_index + self.sequence_length== len(self.data) and self.csvfile != self.total_csv_files ):      
             self.load_tensors()
 
         #create tensor for new round
