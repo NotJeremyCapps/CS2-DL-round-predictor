@@ -33,15 +33,15 @@ class ModelTrainer():
         os.environ['USE_LIBUV'] = '0'
         os.environ['MASTER_ADDR'] = 'localhost'  # Set address
         os.environ['MASTER_PORT'] = '13377'  # Set port
-        os.environ["WORLD_SIZE"] = str(torch.cuda.device_count())
+        os.environ["WORLD_SIZE"] = str(torch.cuda.device_count() if torch.cuda.is_available() else 1)
         os.environ["RANK"] = str(cudaID)
 
         #maybe switch gloo for nccl when on linux system
-        dist.init_process_group("gloo", rank=cudaID, world_size=torch.cuda.device_count())
+        dist.init_process_group("gloo", rank=cudaID, world_size=torch.cuda.device_count() if torch.cuda.is_available() else 1)
 
         self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=self.seq_len,n_layers=2)
 
-        self.device = "cuda:" + str(cudaID)
+        self.device = ("cuda:" + str(cudaID)) if torch.cuda.is_available() else "cpu"
 
         #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         #self.devices = []
@@ -71,7 +71,7 @@ class ModelTrainer():
         #for i in range(len(self.devices)):
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds.txt", sequence_length=self.seq_len, gpu_index=cudaID, num_gpu=torch.cuda.device_count())
+        self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds_train.txt", sequence_length=self.seq_len, gpu_index=cudaID, num_gpu=torch.cuda.device_count() if torch.cuda.is_available() else 1)
 
         # self.training_data, self.testing_data = torch.utils.data.random_split(data_set, [0.75, 0.25])
 
@@ -180,7 +180,7 @@ def createModel(deviceID):
 if __name__ == "__main__":
     print("TORCHVERSION: ", torch.__version__)
     print("NCCL: ", torch.distributed.is_nccl_available())
-    num_gpu = torch.cuda.device_count()
-    torch.multiprocessing.spawn(createModel, nprocs=num_gpu)
+    num_process = torch.cuda.device_count() if torch.cuda.is_available() else 1
+    torch.multiprocessing.spawn(createModel, nprocs=num_process)
 
 #mt.train_model()
