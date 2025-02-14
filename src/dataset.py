@@ -198,11 +198,15 @@ class CS2PredictionDataset(Dataset):
     def __len__(self):
         return self.total_len 
 
-def split(percent):
-    demo_data_root="../game_demos"
-    round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
-    round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")
-    with open("../game_demos/preprocessed/rounds.txt", "r") as file1:
+def split_dataset(percent, demo_root="../game_demos/preprocessed/de_anubis"):
+    # demo_data_root="../game_demos"
+    # round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
+    # round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")
+
+    round_train_txt_file = os.path.join(demo_root, f"rounds_train.txt")
+    round_test_txt_file = os.path.join(demo_root, f"rounds_test.txt")
+
+    with open(os.path.join(demo_root, "rounds.txt"), "r") as file1:
         lines = file1.readlines()
 
     total_games = 0
