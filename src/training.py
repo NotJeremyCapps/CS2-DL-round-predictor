@@ -47,8 +47,10 @@ class ModelTrainer():
         self.lossFunc = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
+        self.split_dataset = False
 
-        split_dataset(0.8)
+        if self.split_dataset:
+            split_dataset(0.8)
 
         self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds_train.txt", sequence_length=self.seq_len)
         self.testset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds_test.txt", sequence_length=self.seq_len)
@@ -91,7 +93,7 @@ class ModelTrainer():
         with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
             for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
                 
-                print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
+                # print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
                 if x_main_data.size(1) == 0: 
                     continue
 
@@ -157,7 +159,7 @@ class ModelTrainer():
             with tqdm(self.test_loader, unit="batch", leave=True) as tepoch:
                 for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
                     
-                    print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
+                    # print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
                     if x_main_data.size(1) == 0: 
                         continue
 
@@ -177,9 +179,9 @@ class ModelTrainer():
 
                     loss = self.lossFunc(out, target.float())
 
-                    self.optimizer.zero_grad() #zeros grad from previous run
-                    loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
-                    self.optimizer.step()#changes weights and bias of parameters based on loss
+                    # self.optimizer.zero_grad() #zeros grad from previous run
+                    # loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
+                    # self.optimizer.step()#changes weights and bias of parameters based on loss
 
                     # sets prediction depending on whether is above of below 0.5 thresh
                     binary_preds = (out > 0.5).float()  # Converts to 0 or 1

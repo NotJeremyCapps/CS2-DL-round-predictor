@@ -2,6 +2,7 @@ from awpy import Demo
 from player import Player
 from round import Round
 import os
+from dataset import split_dataset
 
 #two text files - one for training and one for testing, and run it for all games
 
@@ -131,6 +132,9 @@ def main():
                 game[round_num-skip_counter].write_round_to_csv()
             except Exception as e:
                 print(f"Couldnt load round, Error: {e}")
+
+
+    split_dataset(0.8)
        
 
 
