@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 PATH = "../game_demos/"
-DEMO_NAME = "spirit-vs-faze-m3-dust2.dem"
+DEMO_NAME = "00nation-vs-eclot-m1-mirage.dem"
 
 def main():
     parser = Demo(PATH + DEMO_NAME)
@@ -21,6 +21,9 @@ def main():
     #for z in range(0,10):
     #    players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
     list_pos = []
+    list_set = []
+    dict_list = []
+    count = 0
 
     for round_num in range(len(parser.rounds)): #loops for every round played
 
@@ -32,9 +35,10 @@ def main():
         for i in range(0,10):
             players.append(Player(name=f"player{i}", enums_path = "enums.json"))
             
-
+        
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
-
+            list_pos = []
+            list_set = []
 
             start_idx_curr_tick = start_tick_round_index+(y*10)
 
@@ -47,38 +51,43 @@ def main():
 
             if(curr_tick_info.empty):
                 for z in range(0, 10):
-                    players[z] = prev_players[z]
+                    players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
             else:
                 # Ten players in game
                 for z in range(0, 10):
 
                     players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
+                    prev_start_idx_curr_tick, prev_curr_tick_info = start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
 
-            prev_players = players
-
-        pos = (int(players[0].position[0][0]),int(players[0].position[0][1]),int(players[0].position[0][2]))
-        list_pos.append(pos)
+            for z in range(0, 10):
+                pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
+                print("TEAM: ", players[z].team_name)
+                list_pos.append(pos)
+                list_set.append({"size":6.0, "color": (29/255,204/255,247/255) if(players[z].team_name == "CT") else (253/255,219/255,36/255)})
+            if(count%240==0):
+                dict_list.append({"points":list_pos, "point_settings":list_set})
+            count += 1
         #fig, ax = plot.plot(map_name, list_pos)
 
         
     
 
-    settings = {
-        "size" : 6.0
-    }
+    #settings = {
+    #    "size" : 6.0
+    #}
 
-    size = 6.0
-    list_set = []
-    list_set.append(settings)
+    #size = 6.0
+    #list_set = []
+    #list_set.append(settings)
 
-    dict = {
-        "points" : list_pos[0:0],
-        "points_settings" :  list_set
-    }
+    #dict = {
+    #    "points" : list_pos,#list_pos[0:0],
+    #    "point_settings" : list_set#[{"size":6.0}]#list_set
+    #}
 
-    list_dict = []
-    list_dict.append(dict)
+    #list_dict = []
+    #list_dict.append(dict)
     #print(parser.ticks)
     #Tuple = (0,0,0)
 
@@ -88,7 +97,7 @@ def main():
     #list.append(Tuple)
 
 
-    plot.gif(map_name=map_name, frames_data=list_dict, output_filename="game.gif", duration=16)
+    plot.gif(map_name=map_name, frames_data=dict_list, output_filename="game.gif", duration=4000)
 
     #fig, ax = plot.plot(map_name, list_pos)
 
