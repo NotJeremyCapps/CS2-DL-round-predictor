@@ -37,7 +37,7 @@ class Round:
         #self.round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
         #self.round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")
 
-        emun_file = open("enums.json", 'r')
+        emun_file = open(enums_path, 'r')
         self.enums = json.loads(emun_file.read())
 
         self.input_params_num = 0

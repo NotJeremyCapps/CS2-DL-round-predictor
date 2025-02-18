@@ -6,7 +6,8 @@ from dataset import split_dataset
 
 #two text files - one for training and one for testing, and run it for all games
 
-PATH = "../game_demos/"
+DEMO_PATH = "demos/"
+ENUMS_PATH = "CS2-DL-round-predictor/src/enums.json"
 #spirit-vs-faze-m3-dust2.dem
 #cloud9-vs-saw-m1-nuke.dem
 #test2.dem
@@ -15,9 +16,10 @@ def main():
 
     loaded_maps = {}
 
-    list_of_demo_names = [x for x in os.listdir(PATH) if x.endswith(".dem")]
+    list_of_demo_names = [x for x in os.listdir(DEMO_PATH) if x.endswith(".dem")]
+    print(list_of_demo_names)
     for i in range(len(list_of_demo_names)):
-        parser = Demo(PATH + list_of_demo_names[i])
+        parser = Demo(DEMO_PATH + list_of_demo_names[i])
 
         # with open("player_state_info.txt", "a") as f:
         #     f.write(str(parser.ticks[["player_state"]].sample(n=10)))
@@ -33,8 +35,9 @@ def main():
         for round in range(len(parser.rounds)):
             print(round+1, "      ", round_starts[round], "      ", round_ends[round])
 
-        with open("round_info.txt", "a") as f:
-            f.write(str(parser.rounds))
+        with open("match_info.txt", "a") as f:
+            f.write(f"Match: {list_of_demo_names[i]}\n")
+            f.write(str(parser.rounds) + "\n\n")
 
             
 
@@ -80,8 +83,8 @@ def main():
             current_round = Round(round_title=round_title, 
                                 round_num=n,
                                 map_name=map_name,
-                                demo_data_root=PATH, 
-                                enums_path="enums.json")
+                                demo_data_root=DEMO_PATH, 
+                                enums_path=ENUMS_PATH)
             game.append(current_round)
 
         skip_counter = 0
@@ -94,7 +97,7 @@ def main():
             
             players:list[Player] = []
             for i in range(0,10):
-                players.append(Player(name=f"player{i}", enums_path = "enums.json"))
+                players.append(Player(name=f"player{i}", enums_path = ENUMS_PATH))
             
             # init headers for each player in round dataframe
             #print(round_num)
@@ -134,7 +137,7 @@ def main():
                 print(f"Couldnt load round, Error: {e}")
 
 
-    split_dataset(0.8)
+    split_dataset(0.8, demo_root=os.path.join(DEMO_PATH, "preprocessed/de_anubis"))
        
 
 

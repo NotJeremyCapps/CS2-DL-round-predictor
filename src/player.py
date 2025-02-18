@@ -24,7 +24,7 @@ class Player:
 
         self.team_name = None
 
-        emun_file = open("enums.json", 'r')
+        emun_file = open(enums_path, 'r')
         self.enums = json.loads(emun_file.read())
         #self.enums = None
 
