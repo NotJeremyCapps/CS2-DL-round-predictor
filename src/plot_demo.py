@@ -3,11 +3,47 @@ from awpy import plot
 from player import Player
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+#import sys
+
+#sys.path.append("/c/Users/notje/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/local-packages/Python311/site-packages/opencv_cuda/install_script.py")
+import cv2
+import numpy as np
+import os
+# CPU only, would be nice to have a GPU version
 
 PATH = "../game_demos/"
 DEMO_NAME = "00nation-vs-eclot-m1-mirage.dem"
 
+OUTPUT_PATH = "../parsed_videos/"
+
+#fps = 60
+
+#frame_size = (1024, 1024)
+
 def main():
+    output_path = OUTPUT_PATH + "test.avi"
+    fps = 60
+    frame_size = (1024, 1024)
+    is_color = True
+    fourcc = cv2.VideoWriter_fourcc(*'XVID') # or 'MJPG', 'WMV1'
+
+    video_writer = cv2.VideoWriter(output_path, fourcc, fps, frame_size, is_color)
+
+    frame = np.zeros((frame_size[1], frame_size[0], 3), dtype=np.uint8) 
+    video_writer.write(frame)
+
+    # Example: Read frames from folder
+    image_folder = '../parsed_videos/assets'
+    images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
+    for image in images:
+        frame = cv2.imread(os.path.join(image_folder, image))
+        cv2.circle(frame, (447,63), 8, (0,0,255), -1)
+        video_writer.write(frame)
+
+
+    f = open("test.txt", "w")
+
+
     parser = Demo(PATH + DEMO_NAME)
     map_name = parser.header["map_name"]
 
@@ -24,6 +60,8 @@ def main():
     list_set = []
     dict_list = []
     count = 0
+
+    print(cv2.__file__)
 
     for round_num in range(len(parser.rounds)): #loops for every round played
 
@@ -60,17 +98,19 @@ def main():
                     prev_start_idx_curr_tick, prev_curr_tick_info = start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
 
-            for z in range(0, 10):
+            for z in range(0, 1):
                 pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 print("TEAM: ", players[z].team_name)
+                print("NUM: ", players[z].player_name)
                 list_pos.append(pos)
                 list_set.append({"size":6.0, "color": (29/255,204/255,247/255) if(players[z].team_name == "CT") else (253/255,219/255,36/255)})
-            if(count%240==0):
+            if(count%480==0):
                 dict_list.append({"points":list_pos, "point_settings":list_set})
+                f.write(str(players[z].position[y][0]) + str(players[z].position[y][1]) + str(players[z].position[y][2]) + "\n")
             count += 1
         #fig, ax = plot.plot(map_name, list_pos)
 
-        
+        f.close
     
 
     #settings = {
