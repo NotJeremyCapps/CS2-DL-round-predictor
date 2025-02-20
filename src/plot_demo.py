@@ -20,6 +20,9 @@ OUTPUT_PATH = "../parsed_videos/"
 
 ASSETS_PATH = OUTPUT_PATH + "assets/"
 
+CT_COLOR = (247, 204, 29)
+T_COLOR = (36, 219, 253)
+
 #fps = 60
 
 FRAME_SIZE = (1024, 1024)
@@ -69,39 +72,96 @@ def main():
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
             
-        players:list[Player] = []
-        for i in range(0,10):
-            players.append(Player(name=f"player{i}", enums_path = "enums.json"))
+        #players:list[Player] = []
+        #for i in range(0,10):
+        #    players.append(Player(name=f"player{i}", enums_path = "enums.json"))
 
         video_writer = cv2.VideoWriter(OUTPUT_PATH+"Round_" + str(round_num+1) + ".avi", FOURCC, FPS, FRAME_SIZE, True)
             
+        """steamid_list = []
+        for i in range(100):
+            repeat = False
+            for x in steamid_list:
+                if(parser.ticks.steamid.loc[i] == x):
+                    repeat = True
+                    break
+            if(repeat == False):
+                steamid_list.append(parser.ticks.steamid.loc[i])
+                print("steamid: ",parser.ticks.steamid.loc[i], " team: ", parser.ticks.team_name.loc[i])
+
+        print("num uni: ", len(steamid_list))
+        print("unique ids: ", steamid_list)"""
+
+        steamID_to_array = {}
+        unique_ids = []
+        unique_player_ids = []
+        unique_nonplayer_ids = []
+        num_players = 0
+        num_nonplayers = 0
+        for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))):
+            repeat = False
+            for player in unique_ids:
+                if(parser.ticks.steamid.loc[y+start_tick_round_index] == player):
+                    repeat = True
+                    break
+            if(repeat == False):
+                
+                unique_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                if(parser.ticks.team_name.loc[y+start_tick_round_index] == None):
+                    unique_nonplayer_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                    num_nonplayers += 1
+                else:
+                    unique_player_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                    steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
+                    num_players += 1
+                print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
+
+        print("num uni: ", len(unique_player_ids))
+        print("unique ids: ", unique_player_ids)
+
+        print(steamID_to_array)
+        total_users = num_players + num_nonplayers
+
+        players:list[Player] = []
+        for i in range(0,num_players):
+            players.append(Player(name=f"player{i}", enums_path = "enums.json"))
         
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
             list_pos = []
             list_set = []
 
-            start_idx_curr_tick = start_tick_round_index+(y*10)
+            start_idx_curr_tick = start_tick_round_index+(y*(total_users))
 
             # if y % 10 == 0:
             #     with open("tick_info.txt", "a") as f:
             #         f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
+            curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+total_users-1] #get 1 dataframe per unique user
 
-            curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
-
+            """steamID_to_array = {}
+            for i in range(len(curr_tick_info)):
+                #print(curr_tick_info.steamid.loc[i+start_idx_curr_tick])
+                steamID_to_array[curr_tick_info.steamid.loc[i+start_idx_curr_tick]] = i"""
 
 
             if(curr_tick_info.empty):
-                for z in range(0, 10):
-                    players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
+                for z in range(0, total_users):
+                    
+                    if(curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
+                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
             else:
                 # Ten players in game
-                for z in range(0, 10):
-
-                    players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
-                    prev_start_idx_curr_tick, prev_curr_tick_info = start_idx_curr_tick, curr_tick_info
+                for z in range(0, total_users):
+                    #try:
+                    #    print("id: ", curr_tick_info.steamid.loc[z+start_idx_curr_tick], " num: ", steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
+                    #except:
+                    #    print(curr_tick_info.steamid.loc[z+start_idx_curr_tick])
+                    #    exit()
+                    if(curr_tick_info.team_name.loc[z+start_idx_curr_tick] != None):
+                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].load_tick_data(start_idx_curr_tick, curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
+                        prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
 
-            for z in range(0, 10):
+            for z in range(0, num_players):
                 if(math.isnan(players[z].position[y][0]) or math.isnan(players[z].position[y][1])):
                     if(y!=0):
                         players[z].position[y] = players[z].position[y-1]
@@ -110,10 +170,11 @@ def main():
                     #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
-            for z in range(0, 10):
-                pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
+            for z in range(0, num_players):
+                draw_player(players[z], y, frame)
+                #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
-                cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
+                #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
             video_writer.write(frame)
                 #print("TEAM: ", players[z].team_name)
                 #print("NUM: ", players[z].player_name)
@@ -183,6 +244,28 @@ def translate_position(position, axis):
     if axis == "x":
         return (position - start) / scale
     return (start - position) / scale
+
+#player is player object, tick is tick of round, frame is the frame to draw on
+def draw_player(player, tick, frame):
+    pos_x = int(translate_position(player.position[tick][0], "x"))
+    pos_y = int(translate_position(player.position[tick][1], "y"))
+
+    player_color = CT_COLOR if(player.team_name == "CT") else T_COLOR
+
+    if(player.health[tick] == 0):
+        cv2.line(frame, (pos_x-10, pos_y-10), (pos_x+10, pos_y+10), player_color, 5)
+        cv2.line(frame, (pos_x-10, pos_y+10), (pos_x+10, pos_y-10), player_color, 5)
+
+    else:
+        cv2.circle(frame, (pos_x, pos_y), 15, player_color, -1)
+        #if(player.HasArmor[tick] == 1):
+            
+
+            #armor = cv2.imread(ASSETS_PATH + "head_armor.png")
+            #armor = cv2.resize(armor, FRAME_SIZE)
+
+            #frame = cv2.add(frame, armor)
+
 
 
 main()
