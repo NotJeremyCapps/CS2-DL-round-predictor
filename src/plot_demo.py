@@ -283,9 +283,9 @@ def draw_player(player, tick, frame):
     else:
         cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
         if(player.HasHelmet[tick] == 1):
-            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.7), pos_y-round(player_size*0.7)), 0.7, (player_size/22)+0.17)
+            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
         elif(player.HasArmor[tick] == 1):
-            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.7), pos_y-round(player_size*0.7)), 0.7, (player_size/22)+0.17)
+            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
 
 
         #if(player.HasBomb[tick] == 1):
