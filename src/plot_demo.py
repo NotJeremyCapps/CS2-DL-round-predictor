@@ -11,7 +11,7 @@ import os
 # CPU only, would be nice to have a GPU version
 
 PATH = "../game_demos/"
-DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"
+DEMO_NAME = "00nation-vs-eclot-m1-mirage.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -19,6 +19,8 @@ ASSETS_PATH = OUTPUT_PATH + "assets/"
 
 CT_COLOR = (247, 204, 29)
 T_COLOR = (36, 219, 253)
+
+ALPHA_THRESH = 0.5
 
 #fps = 60
 
@@ -143,8 +145,8 @@ def main():
             if(curr_tick_info.empty):
                 for z in range(0, total_users):
                     
-                    if(curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
-                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
+                    #if(curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
+                    players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
             else:
                 # Ten players in game
                 for z in range(0, total_users):
@@ -242,6 +244,27 @@ def translate_position(position, axis):
         return (position - start) / scale
     return (start - position) / scale
 
+
+def overlay_image(frame, image_path, coordinates, opacity, resize):
+
+
+    blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
+
+    overlay = cv2.imread(ASSETS_PATH + image_path, cv2.IMREAD_UNCHANGED)
+    overlay = cv2.resize(overlay, (int(overlay.shape[1]*resize), int(overlay.shape[0]*resize)))
+    overlay_no_alpha = cv2.imread(ASSETS_PATH + image_path)
+    overlay_no_alpha = cv2.resize(overlay_no_alpha, (int(overlay_no_alpha.shape[1]*resize), int(overlay_no_alpha.shape[0]*resize)))
+
+    b, g, r, a = cv2.split(overlay)
+
+    for i in range(overlay.shape[0]):
+            for j in range(overlay.shape[1]):
+                if(a[i][j] > ALPHA_THRESH):
+                    #this is a mess
+                    frame[coordinates[1] + i, coordinates[0] + j] = (math.floor(overlay_no_alpha[i, j][0]*opacity + frame[coordinates[1] + i, coordinates[0] + j][0]*(1-opacity)), math.floor(overlay_no_alpha[i, j][1]*opacity + frame[coordinates[1] + i, coordinates[0] + j][1]*(1-opacity)), math.floor(overlay_no_alpha[i, j][2]*opacity + frame[coordinates[1] + i, coordinates[0] + j][2]*(1-opacity)))
+
+    #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)
+
 #player is player object, tick is tick of round, frame is the frame to draw on
 def draw_player(player, tick, frame):
     pos_x = int(translate_position(player.position[tick][0], "x"))
@@ -257,28 +280,31 @@ def draw_player(player, tick, frame):
 
     else:
         cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
-        if(player.HasArmor[tick] == 1):
+        if(player.HasHelmet[tick] == 1):
+            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.7), pos_y-round(player_size*0.7)), 0.7, (player_size/22)+0.17)
+        elif(player.HasArmor[tick] == 1):
+            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.7), pos_y-round(player_size*0.7)), 0.7, (player_size/22)+0.17)
             
-            blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
+            #blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
 
-            armor = cv2.imread(ASSETS_PATH + "head_armor.png", cv2.IMREAD_UNCHANGED)
+            #armor = cv2.imread(ASSETS_PATH + "head_armor.png", cv2.IMREAD_UNCHANGED)
+            #armor_no_alpha = cv2.imread(ASSETS_PATH + "head_armor.png")
 
-            b, g, r, a = cv2.split(armor)
+            #b, g, r, a = cv2.split(armor)
 
-            print("ALPHA: ",type(a))
+            #print("ALPHA: ",type(a))
 
-
-            
-            blank_frame[pos_y:pos_y + armor.shape[0], pos_x:pos_x + armor.shape[1]] = armor
+            #for i in range(armor.shape[0]):
+            #    for j in range(armor.shape[1]):
+            #        if(a[i][j] > 0):
+            #            blank_frame[pos_y + i, pos_x + j] = armor_no_alpha[i, j]
 
             #blank_frame = 
             
             #armor = cv2.resize(armor, FRAME_SIZE)
-            cv2.addWeighted(frame, 1.0, blank_frame, 0.5, 0.0, frame)
+            #cv2.addWeighted(frame, 1.0, blank_frame, 0.5, 0.0, frame)
             
 
             #frame = cv2.add(frame, armor)
-
-
 
 main()
