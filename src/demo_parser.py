@@ -4,6 +4,7 @@ from round import Round
 import os
 from dataset import split_dataset
 # from pyo3_runtime import PanicException
+import math
 
 #two text files - one for training and one for testing, and run it for all games
 
