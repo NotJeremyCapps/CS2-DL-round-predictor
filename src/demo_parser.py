@@ -3,6 +3,7 @@ from player import Player
 from round import Round
 import os
 from dataset import split_dataset
+import math
 
 #two text files - one for training and one for testing, and run it for all games
 
@@ -91,9 +92,39 @@ def main():
             first_tick_of_round = round_starts[round_num]
             start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
 
+
+            steamID_to_array = {}
+            unique_ids = []
+            unique_player_ids = []
+            unique_nonplayer_ids = []
+            num_players = 0
+            num_nonplayers = 0
+            for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))):
+                repeat = False
+                for player in unique_ids:
+                    if(parser.ticks.steamid.loc[y+start_tick_round_index] == player):
+                        repeat = True
+                        break
+                if(repeat == False):
+                    
+                    unique_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                    if(parser.ticks.team_name.loc[y+start_tick_round_index] == None):
+                        unique_nonplayer_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                        num_nonplayers += 1
+                    else:
+                        unique_player_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                        steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
+                        num_players += 1
+                    #print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
+
+            #print("num uni: ", len(unique_player_ids))
+            #print("unique ids: ", unique_player_ids)
+
+            #print(steamID_to_array)
+            total_users = num_players + num_nonplayers
             
             players:list[Player] = []
-            for i in range(0,10):
+            for i in range(0,num_players):
                 players.append(Player(name=f"player{i}", enums_path = "enums.json"))
             
             # init headers for each player in round dataframe
@@ -104,13 +135,13 @@ def main():
             for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
 
 
-                start_idx_curr_tick = start_tick_round_index+(y*10)
+                start_idx_curr_tick = start_tick_round_index+(y*total_users)
 
                 # if y % 10 == 0:
                 #     with open("tick_info.txt", "a") as f:
                 #         f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
 
-                curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+9] #gets 10 dataframes (1 for each player) for each tick
+                curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+total_users-1] #gets data frame for each user for that tick
 
                 if(curr_tick_info.empty):
                     print("error parsing data for round ", round_num+1)
@@ -120,11 +151,19 @@ def main():
                     break
 
                 # Ten players in game
-                for z in range(0, 10):
+                for z in range(0, total_users):
 
-                    players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
+                    if(curr_tick_info.team_name.loc[z+start_idx_curr_tick] != None):
+                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
+                    #players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
 
                 
+                for z in range(0, num_players):
+                    if(math.isnan(players[z].position[y][0]) or math.isnan(players[z].position[y][1])):
+                        if(y!=0):
+                            players[z].position[y] = players[z].position[y-1]
+                        else:
+                            players[z].position[y] = (0,0,0)
         
             try:
                 game[round_num-skip_counter].load_player_tick_data(players=players)
