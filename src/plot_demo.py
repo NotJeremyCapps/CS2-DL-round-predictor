@@ -1,9 +1,6 @@
 from awpy import Demo
 from awpy import plot
 from player import Player
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from awpy.plot.utils import position_transform_axis
 import math
 #import sys
 
@@ -14,7 +11,7 @@ import os
 # CPU only, would be nice to have a GPU version
 
 PATH = "../game_demos/"
-DEMO_NAME = "00nation-vs-eclot-m1-mirage.dem"
+DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -249,20 +246,36 @@ def translate_position(position, axis):
 def draw_player(player, tick, frame):
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
+    player_size = round(((player.position[tick][2]+370)/79) + 10)
+    player_size_offset = round((2*player_size)/3)
 
     player_color = CT_COLOR if(player.team_name == "CT") else T_COLOR
 
     if(player.health[tick] == 0):
-        cv2.line(frame, (pos_x-10, pos_y-10), (pos_x+10, pos_y+10), player_color, 5)
-        cv2.line(frame, (pos_x-10, pos_y+10), (pos_x+10, pos_y-10), player_color, 5)
+        cv2.line(frame, (pos_x-player_size_offset, pos_y-player_size_offset), (pos_x+player_size_offset, pos_y+player_size_offset), player_color, 5)
+        cv2.line(frame, (pos_x-player_size_offset, pos_y+player_size_offset), (pos_x+player_size_offset, pos_y-player_size_offset), player_color, 5)
 
     else:
-        cv2.circle(frame, (pos_x, pos_y), 15, player_color, -1)
-        #if(player.HasArmor[tick] == 1):
+        cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
+        if(player.HasArmor[tick] == 1):
             
+            blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
 
-            #armor = cv2.imread(ASSETS_PATH + "head_armor.png")
+            armor = cv2.imread(ASSETS_PATH + "head_armor.png", cv2.IMREAD_UNCHANGED)
+
+            b, g, r, a = cv2.split(armor)
+
+            print("ALPHA: ",type(a))
+
+
+            
+            blank_frame[pos_y:pos_y + armor.shape[0], pos_x:pos_x + armor.shape[1]] = armor
+
+            #blank_frame = 
+            
             #armor = cv2.resize(armor, FRAME_SIZE)
+            cv2.addWeighted(frame, 1.0, blank_frame, 0.5, 0.0, frame)
+            
 
             #frame = cv2.add(frame, armor)
 
