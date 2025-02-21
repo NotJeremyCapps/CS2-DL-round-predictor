@@ -3,13 +3,15 @@ import json
 import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
 
+ENUMS_PATH = "enums.json"
+
 # Load enums for embedding layer
-emun_file = open("enums.json", 'r')
+emun_file = open(ENUMS_PATH, 'r')
 enums = json.loads(emun_file.read())
 
 class CS2LSTM(nn.Module):
 
-    def __init__(self, n_feature=None, out_feature=1, n_hidden=30, n_layers=2, drop_prob=0.5):
+    def __init__(self, n_feature=None, out_feature=1, n_hidden=256, n_layers=2, drop_prob=0.5):
         super().__init__()
         self.drop_prob = drop_prob
         self.n_layers = n_layers

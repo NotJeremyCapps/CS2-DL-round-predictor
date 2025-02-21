@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
+import os
 
 
 from dataset import CS2PredictionDataset, split_dataset
@@ -16,6 +17,8 @@ from dataset import CS2PredictionDataset, split_dataset
 from model import CS2LSTM
 
 # torch.set_printoptions(profile="full")
+
+DEMO_PATH = "../../demos/"
 
 
 class ModelTrainer():
@@ -28,7 +31,9 @@ class ModelTrainer():
 
         self.seq_len = 60
 
-        self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=self.seq_len,n_layers=2)
+
+
+        self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=256,n_layers=2)
 
         self.hidden = self.model.init_hidden(self.batch_size)
 
@@ -47,13 +52,13 @@ class ModelTrainer():
         self.lossFunc = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.split_dataset = False
+        self.split_dataset = True
 
         if self.split_dataset:
-            split_dataset(0.8)
+            split_dataset(0.8, os.path.join(DEMO_PATH, "preprocessed"))
 
-        self.trainset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds_train.txt", sequence_length=self.seq_len)
-        self.testset = CS2PredictionDataset(list="../game_demos/preprocessed/de_anubis/rounds_test.txt", sequence_length=self.seq_len)
+        self.trainset = CS2PredictionDataset(list=os.path.join(DEMO_PATH, "/preprocessed/rounds_train.txt"), sequence_length=self.seq_len)
+        self.testset = CS2PredictionDataset(list=os.path.join(DEMO_PATH, "/preprocessed/rounds_test.txt"), sequence_length=self.seq_len)
 
         print(f"Trainset len : {len(self.trainset)}")
         print(f"Testset len : {len(self.testset)}")

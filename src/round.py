@@ -61,7 +61,9 @@ class Round:
 
         # CT Win = 0
         # T Win = 1
-        if round_dict['winner'][self.round_num] == "CT":
+
+        # In demo 3 means CT, 2 means T
+        if round_dict['winner'][self.round_num] == "CT" or str(round_dict['winner'][self.round_num]) == "3":
             round_info_dict['winner'] = [0]
         else:
             round_info_dict['winner'] = [1]
