@@ -11,7 +11,9 @@ import os
 # CPU only, would be nice to have a GPU version
 
 PATH = "../game_demos/"
-DEMO_NAME = "00nation-vs-eclot-m1-mirage.dem"
+#g2-vs-heroic-m3-mirage.dem
+#00nation-vs-eclot-m1-mirage.dem
+DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -45,10 +47,10 @@ def main():
 
 
     parser = Demo(PATH + DEMO_NAME)
-    map_name = parser.header["map_name"]
 
+    #SOME DEMOS DO NOT HAVE WARMUP LEADING TO FIRST PISTOL ROUND NOT BEING PARSED!
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
-    round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
+    round_ends = (parser.rounds["end"]) #does not include time between round determination and respaw
 
     #players:list[Player] = []
     #for i in range(0,10):
@@ -69,7 +71,7 @@ def main():
 
         first_tick_of_round = round_starts[round_num]
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
-
+        print("FIRST TICK: ", first_tick_of_round)
             
         #players:list[Player] = []
         #for i in range(0,10):
@@ -113,12 +115,12 @@ def main():
                     unique_player_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
                     steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
                     num_players += 1
-                print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
+                #print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
 
-        print("num uni: ", len(unique_player_ids))
-        print("unique ids: ", unique_player_ids)
+        #print("num uni: ", len(unique_player_ids))
+        #print("unique ids: ", unique_player_ids)
 
-        print(steamID_to_array)
+        #print(steamID_to_array)
         total_users = num_players + num_nonplayers
 
         players:list[Player] = []
@@ -145,8 +147,8 @@ def main():
             if(curr_tick_info.empty):
                 for z in range(0, total_users):
                     
-                    #if(curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
-                    players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
+                    if(prev_curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
+                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
             else:
                 # Ten players in game
                 for z in range(0, total_users):
@@ -284,6 +286,10 @@ def draw_player(player, tick, frame):
             overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.7), pos_y-round(player_size*0.7)), 0.7, (player_size/22)+0.17)
         elif(player.HasArmor[tick] == 1):
             overlay_image(frame, "armor.png", (pos_x-round(player_size*0.7), pos_y-round(player_size*0.7)), 0.7, (player_size/22)+0.17)
+
+
+        #if(player.HasBomb[tick] == 1):
+        #    overlay_image(frame)
             
             #blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
 
