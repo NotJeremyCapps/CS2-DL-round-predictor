@@ -96,6 +96,7 @@ def main():
         steamID_to_array = {}
         unique_ids = []
         unique_player_ids = []
+        unique_player_names = []
         unique_nonplayer_ids = []
         num_players = 0
         num_nonplayers = 0
@@ -113,6 +114,7 @@ def main():
                     num_nonplayers += 1
                 else:
                     unique_player_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                    unique_player_names.append(parser.ticks.name.loc[y+start_tick_round_index])
                     steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
                     num_players += 1
                 #print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
@@ -159,6 +161,9 @@ def main():
                     #    exit()
                     if(curr_tick_info.team_name.loc[z+start_idx_curr_tick] != None):
                         players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].load_tick_data(start_idx_curr_tick, curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
+                        #print(parser.parser.parse_player_info())
+                        print(parser.parser.parse_event(event_name="item_equip"))#,player=[unique_player_names[0]]))#, players=unique_player_ids[0]))#,unique_player_ids[0],0)["item"])#.columns)#, ticks=[0,1000])) gets held weapon
+                        #tick and item
                         prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
 
@@ -250,7 +255,7 @@ def translate_position(position, axis):
 def overlay_image(frame, image_path, coordinates, opacity, resize):
 
 
-    blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
+    #blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
 
     overlay = cv2.imread(ASSETS_PATH + image_path, cv2.IMREAD_UNCHANGED)
     overlay = cv2.resize(overlay, (int(overlay.shape[1]*resize), int(overlay.shape[0]*resize)))
