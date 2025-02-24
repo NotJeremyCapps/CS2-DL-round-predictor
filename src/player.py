@@ -3,7 +3,7 @@ import json
 
 class Player:
     
-    def __init__(self, name, enums_path:str="enums.json"):
+    def __init__(self, name, enums_path:str="enums.json", steam_id=None):
         
         self.player_name = name
         # Each parameter is a list where the index in the list corresponds to a tick
@@ -23,6 +23,8 @@ class Player:
         self.HasBomb = []
 
         self.team_name = None
+
+        self.steam_id = steam_id
 
         emun_file = open("enums.json", 'r')
         self.enums = json.loads(emun_file.read())

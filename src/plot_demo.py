@@ -2,6 +2,7 @@ from awpy import Demo
 from awpy import plot
 from player import Player
 import math
+from typing import Sequence
 #import sys
 
 #sys.path.append("/c/Users/notje/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/local-packages/Python311/site-packages/opencv_cuda/install_script.py")
@@ -13,7 +14,7 @@ import os
 PATH = "../game_demos/"
 #g2-vs-heroic-m3-mirage.dem
 #00nation-vs-eclot-m1-mirage.dem
-DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"
+DEMO_NAME = "replay.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -22,7 +23,7 @@ ASSETS_PATH = OUTPUT_PATH + "assets/"
 CT_COLOR = (247, 204, 29)
 T_COLOR = (36, 219, 253)
 
-ALPHA_THRESH = 0.5
+ALPHA_THRESH = 0
 
 #fps = 60
 
@@ -50,7 +51,28 @@ def main():
 
     #SOME DEMOS DO NOT HAVE WARMUP LEADING TO FIRST PISTOL ROUND NOT BEING PARSED!
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
-    round_ends = (parser.rounds["end"]) #does not include time between round determination and respaw
+    round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
+
+    equipped_items_all = parser.parser.parse_event(event_name="item_equip")
+    equipped_ticks = equipped_items_all["tick"].tolist()
+    equipped_steamid = equipped_items_all["user_steamid"].tolist()
+    equipped_items = equipped_items_all["item"].tolist()
+
+
+    #for i in range(len(equipped_items_all)):
+    #    print(equipped_items_all["item"][i], " ", equipped_items_all["weptype"][i])
+    #equipped_skins = equipped_items_all.columns
+    #print(equipped_items_all["defindex"])#.columns)
+    #for i in equipped_items_all["hassilencer"]:
+    #   print(i)
+    equip_list = [equipped_ticks, equipped_steamid, equipped_items]
+
+    #equipped_items.values.tolist()
+
+    #event_df = parser.parser.parse_event(event_name="item_equip")
+
+    #for i in range(max(round_ends)):
+    #    print(parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[i]))
 
     #players:list[Player] = []
     #for i in range(0,10):
@@ -69,7 +91,7 @@ def main():
 
         print("ROUND " + str(round_num+1))
 
-        first_tick_of_round = round_starts[round_num]
+        first_tick_of_round = int(round_starts[round_num])
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
         print("FIRST TICK: ", first_tick_of_round)
             
@@ -92,6 +114,14 @@ def main():
 
         print("num uni: ", len(steamid_list))
         print("unique ids: ", steamid_list)"""
+
+        #for i in range(len(equip_list[0])):
+            #if(i==0):
+            #print("TICKLIST: ",equip_list[0][i], " first_tick_of_round: ", first_tick_of_round)
+            #print(type(first_tick_of_round))
+            #if(equip_list[0][i] == int(first_tick_of_round)):
+            #    print("MATCH")
+            #equip_first_index = 
 
         steamID_to_array = {}
         unique_ids = []
@@ -126,8 +156,12 @@ def main():
         total_users = num_players + num_nonplayers
 
         players:list[Player] = []
+        players_equipped = []
+
         for i in range(0,num_players):
-            players.append(Player(name=f"player{i}", enums_path = "enums.json"))
+            players.append(Player(name=f"player{i}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
+            players_equipped.append([])
+ 
         
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
             list_pos = []
@@ -150,7 +184,7 @@ def main():
                 for z in range(0, total_users):
                     
                     if(prev_curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
-                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
+                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-total_users]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
             else:
                 # Ten players in game
                 for z in range(0, total_users):
@@ -162,7 +196,8 @@ def main():
                     if(curr_tick_info.team_name.loc[z+start_idx_curr_tick] != None):
                         players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].load_tick_data(start_idx_curr_tick, curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
                         #print(parser.parser.parse_player_info())
-                        print(parser.parser.parse_event(event_name="item_equip"))#,player=[unique_player_names[0]]))#, players=unique_player_ids[0]))#,unique_player_ids[0],0)["item"])#.columns)#, ticks=[0,1000])) gets held weapon
+                        #player = [str(76561198799340122)]#[unique_player_ids[1]]#unique_player_ids[0]user_steamid
+                        #parser.parser.parse_event(event_name="item_equip")#, player=player))#,player=[unique_player_names[0]]))#, players=unique_player_ids[0]))#,unique_player_ids[0],0)["item"])#.columns)#, ticks=[0,1000])) gets held weapon
                         #tick and item
                         prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
@@ -177,7 +212,60 @@ def main():
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
             for z in range(0, num_players):
-                draw_player(players[z], y, frame)
+
+                update_found = 0
+                for i in range(len(equip_list[0])):
+                    #print(type(equip_list[0][i]), type(equip_list[1][i]), type(players[z].steam_id))
+                    #print(int(equip_list[1][i]), " ", players[z].steam_id)
+
+                    #print(equip_list[0][i], " ", y)
+                    if((equip_list[0][i] == y+first_tick_of_round) and (equip_list[1][i] == players[z].steam_id)):
+                        players_equipped[z].append(equip_list[2][i])
+                        equip_list[0].pop(i)
+                        equip_list[1].pop(i)
+                        equip_list[2].pop(i)
+                        update_found = 1
+                        break
+                    
+                    if(equip_list[0][i] > y+first_tick_of_round):
+                        break
+
+                if(update_found == 0 and not (y == 0) ):
+                    players_equipped[z].append(players_equipped[z][-1])
+                elif(update_found == 0 and (y == 0)):
+                    current_tick_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
+                    #current_weapon = "knife"
+                    for i in range(len(current_tick_weapons)):
+                        #print(type(current_tick_weapons["steamid"][i]))
+                        #print(type(players[z].steam_id))
+
+                        #print(current_tick_weapons["steamid"])
+                        if(str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
+                            current_weapon = current_tick_weapons["active_weapon_name"][i]
+                            break
+
+                    #print(current_tick_weapons["active_weapon_name"][i])
+
+                    if(current_weapon == None):
+                        current_weapon = "knife"
+
+
+                    print(current_weapon)
+
+                    players_equipped[z].append(current_weapon)
+
+                #if(players_equipped[z][-1] == "hkp2000"):
+
+
+                #TODO split equip list for each round, delete entry after usage
+                #for i in range(len(equip_list[0])):
+                #print(i)
+                #if(equip_list[0][i] == y and equip_list[1][i] == players[i].steam_id):
+                #    players_equipped[z].append(equip_list[2][i])
+                #    break
+                #players_equiped[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].append()
+
+                draw_player(players[z], y, frame, players_equipped[z])
                 #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
                 #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
@@ -266,14 +354,15 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
 
     for i in range(overlay.shape[0]):
             for j in range(overlay.shape[1]):
+                #print(a[i][j])
                 if(a[i][j] > ALPHA_THRESH):
                     #this is a mess
-                    frame[coordinates[1] + i, coordinates[0] + j] = (math.floor(overlay_no_alpha[i, j][0]*opacity + frame[coordinates[1] + i, coordinates[0] + j][0]*(1-opacity)), math.floor(overlay_no_alpha[i, j][1]*opacity + frame[coordinates[1] + i, coordinates[0] + j][1]*(1-opacity)), math.floor(overlay_no_alpha[i, j][2]*opacity + frame[coordinates[1] + i, coordinates[0] + j][2]*(1-opacity)))
+                    frame[coordinates[1] + i, coordinates[0] + j] = (math.floor(overlay_no_alpha[i, j][0]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][0]*(1-(opacity*(a[i][j]/255)))), math.floor(overlay_no_alpha[i, j][1]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][1]*(1-(opacity*(a[i][j]/255)))), math.floor(overlay_no_alpha[i, j][2]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][2]*(1-(opacity*(a[i][j]/255)))))
 
     #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)
 
 #player is player object, tick is tick of round, frame is the frame to draw on
-def draw_player(player, tick, frame):
+def draw_player(player, tick, frame, player_equipped):
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
     player_size = round(((player.position[tick][2]+370)/79) + 10)
@@ -292,6 +381,27 @@ def draw_player(player, tick, frame):
         elif(player.HasArmor[tick] == 1):
             overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
 
+        held_item = player_equipped[tick]
+        #held_item = "knife"
+        #for i in range(len(equip_list[0])):
+           #print(i)
+        #    if(equip_list[0][i] == tick and equip_list[1][i]):
+        #        held_item = equip_list[2][i]
+        #        break       
+        
+        if(held_item == "knife"):
+            held_item = "knife_ct" if(player.team_name == "CT") else "knife_t"
+
+        #TODO some weapons are considered the same
+        #deag & r8
+        #a1 & a4
+        #p2k & usp
+
+        print("HELD: ", held_item)
+        #print(type(equip_list[0]))
+        #print(player_equipped)
+
+        overlay_image(frame, "weapons/"+held_item+".png", (pos_x, pos_y-50), 1.0, 0.25)
 
         #if(player.HasBomb[tick] == 1):
         #    overlay_image(frame)
