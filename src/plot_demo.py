@@ -1,7 +1,6 @@
 from awpy import Demo
 from awpy import plot
 from player import Player
-from round import Round
 import math
 from typing import Sequence
 import json
@@ -67,6 +66,36 @@ def main():
     equipped_ticks = equipped_items_all["tick"].tolist()
     equipped_steamid = equipped_items_all["user_steamid"].tolist()
     equipped_items = equipped_items_all["item"].tolist()
+#"is_bomb_dropped","inventory","inventory_as_ids"
+
+    #testing = parser.parser.parse_ticks(wanted_props=["inventory","is_bomb_dropped","is_bomb_planted","dropped_at_time"])
+    #print(testing.query('tick == 120')["tick"].head(1))
+    #print(testing.query('tick == 120')["is_bomb_dropped"].head(1))
+    #print(testing.query('tick == 120')["inventory"].head(10))#.columns)
+   #print(testing["dropped_at_time"].head(10))
+
+    #print(parser.parser.list_game_events())
+
+    bomb_pickups = parser.parser.parse_event(event_name="bomb_pickup")
+    bomb_drops = parser.parser.parse_event(event_name="bomb_dropped")
+    bomb_plants = parser.parser.parse_event(event_name="bomb_planted")
+
+    bomb_pickups_index = 0
+    bomb_drops_index = 0
+    bomb_plants_index = 0
+
+
+    #print(bomb_status[0])
+    #print(bomb_status[1])
+    #print(bomb_status[2])
+
+    #print(round_starts)
+
+
+    #print(parser.parser.parse_event("dropped_at_time"))
+
+
+    #print(parser.parser.parse_item_drops())
 
 
     #for i in range(len(equipped_items_all)):
@@ -95,7 +124,7 @@ def main():
     dict_list = []
     #count = 0
 
-    print(cv2.__file__)
+    #sprint(cv2.__file__)
 
     for round_num in range(len(parser.rounds)): #loops for every round played
 
@@ -172,10 +201,18 @@ def main():
             players.append(Player(name=f"player{i}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
             players_equipped.append([])
 
-        current_round = Round(round_num=round_num, need_write=False)
+        round_dict = parser.rounds
 
-        current_round.init_headers()
-        
+        bomb_plant_time = None
+
+        if str(round_dict['bomb_plant'][round_num]) != "<NA>":
+            bomb_plant_time = int(round_dict['bomb_plant'][round_num]) - first_tick_of_round
+
+        bomb_pos = []
+
+        most_updated_tick = 0
+
+
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
             list_pos = []
             list_set = []
@@ -215,7 +252,6 @@ def main():
                         prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
 
-            current_round.load_round_data(round_dict=parser.rounds)
 
             for z in range(0, num_players):
                 if(math.isnan(players[z].position[y][0]) or math.isnan(players[z].position[y][1])):
@@ -224,6 +260,7 @@ def main():
                     else:
                         players[z].position[y] = (0,0,0)
                     #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
+
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
             for z in range(0, num_players):
@@ -241,7 +278,10 @@ def main():
                             current_tick_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
                             for i in range(len(current_tick_weapons)):
                                 if(str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
-                                    players_equipped[z].append(weapon_translate[current_tick_weapons["active_weapon_name"][i]])
+                                    if(current_tick_weapons["active_weapon_name"][i] != None):
+                                        players_equipped[z].append(weapon_translate[current_tick_weapons["active_weapon_name"][i]])
+                                    else:
+                                        players_equipped[z].append(equip_list[2][i])
                                     break
                         else:
                             players_equipped[z].append(equip_list[2][i])
@@ -296,6 +336,99 @@ def main():
                 #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
                 #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
+
+
+            #for weap in tick_data.inventory.loc[tick_idx+z]:
+            #bomb_updated = False
+
+            #print("LEN: ", len(bomb_pickups[["tick"]]))
+            #print(bomb_pickups["tick"])
+            #print(bomb_pickups_index)
+
+            bomb_updated = False
+
+            for i in range(len(bomb_pickups["tick"])):
+                #print(type(bomb_pickups))
+                if(bomb_pickups["tick"][i+bomb_pickups_index] <= y+first_tick_of_round):
+                    if(bomb_pickups["tick"][i+bomb_pickups_index] > most_updated_tick):
+                        current_bomb_holder = steamID_to_array[bomb_pickups["user_steamid"][i+bomb_pickups_index]]
+                        most_updated_tick = bomb_pickups["tick"][i+bomb_pickups_index]
+
+                    bomb_updated = True
+                else:
+                    bomb_pickups = bomb_pickups[i:]
+                    if(bomb_updated):
+                        bomb_pickups_index += i
+                    break
+
+            
+            bomb_updated = False
+
+            #print(bomb_drops["tick"])
+
+            for i in range(len(bomb_drops["tick"])):
+                if(bomb_drops["tick"][i+bomb_drops_index] <= y+first_tick_of_round):
+                    if(bomb_drops["tick"][i+bomb_drops_index] > most_updated_tick):
+                        current_bomb_holder = None
+                        most_updated_tick = bomb_drops["tick"][i+bomb_drops_index]
+
+                    bomb_updated = True
+                else:
+                    bomb_drops = bomb_drops[i:]
+                    if(bomb_updated):
+                        bomb_drops_index += i
+                    break
+
+            
+            #print(bomb_plants)
+            #print(bomb_plants_index,"!")
+
+            bomb_updated = False
+
+            for i in range(len(bomb_plants["tick"])):
+                if(bomb_plants["tick"][i+bomb_plants_index] <= y+first_tick_of_round):
+                    if(bomb_plants["tick"][i+bomb_plants_index] > most_updated_tick):
+                        current_bomb_holder = None
+                        most_updated_tick = bomb_plants["tick"][i+bomb_plants_index]
+                        #bomb_updated = True
+                    bomb_updated = True
+                else:
+                    bomb_plants = bomb_plants[i:]
+                    if(bomb_updated):
+                        bomb_plants_index += i
+                    break
+
+
+            if(current_bomb_holder != None):
+                bomb_pos.append(players[current_bomb_holder].position[y])
+            else:
+                if(y==0):
+                    bomb_pos.append((1136.0, 32.0, -164.78845))
+                else:      
+                    bomb_pos.append(bomb_pos[-1])
+
+
+            #print(bomb_pos)
+
+
+
+            #player_has_bomb = False
+            #for i in range(len(players)):
+            #    if(players[i].HasBomb[y]):
+            #        bomb_pos.append(players[i].position[y])
+            #        player_has_bomb = True
+            #        break
+        
+            #if(not player_has_bomb):
+            #    if(y==0):
+            #        bomb_pos.append((1136.0, 32.0, -164.78845))
+            #    else:
+            #        bomb_pos.append(bomb_pos[-1])
+
+            #print(bomb_pos.append(bomb_pos[-1]))
+
+            draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None)
+
             video_writer.write(frame)
                 #print("TEAM: ", players[z].team_name)
                 #print("NUM: ", players[z].player_name)
@@ -390,6 +523,7 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
 
 #player is player object, tick is tick of round, frame is the frame to draw on
 def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2):
+
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
     player_size = round(((player.position[tick][2]+370)/79) + 10)
@@ -473,5 +607,10 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
             
 
             #frame = cv2.add(frame, armor)
+
+def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb):
+    if(not player_has_bomb):
+        overlay_image(frame, "bomb_icon.png", (int(translate_position(bomb_position[tick][0], "x")), int(translate_position(bomb_position[tick][1], "y"))), 1.0, 1)#(bomb_position[3]+370/400)+0.2))
+    #print("test")
 
 main()

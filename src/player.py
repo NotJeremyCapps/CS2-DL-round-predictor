@@ -75,7 +75,9 @@ class Player:
         primary_weapon = 0 
         secondary_weapon = 0 
         # Enumerate primary, secondary weapons, grenade, and has_bomb based on player inventory
+        #print(" ")
         for weap in tick_data.inventory.loc[tick_idx+z]:
+            #print(weap)
             if weap in self.enums["Player"]["primary_weapon"]:
                 self.primary_weapon.append(self.enums["Player"]["primary_weapon"][weap])
                 primary_weapon  = 1
