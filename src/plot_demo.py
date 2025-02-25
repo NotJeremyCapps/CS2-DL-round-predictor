@@ -15,7 +15,7 @@ import os
 PATH = "../game_demos/"
 #g2-vs-heroic-m3-mirage.dem
 #00nation-vs-eclot-m1-mirage.dem
-DEMO_NAME = "replay.dem"
+DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"#"replay.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -75,6 +75,10 @@ def main():
    #print(testing["dropped_at_time"].head(10))
 
     #print(parser.parser.list_game_events())
+
+    #print(parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'"))
+
+    defuser_pickups = parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'")
 
     bomb_pickups = parser.parser.parse_event(event_name="bomb_pickup")
     bomb_drops = parser.parser.parse_event(event_name="bomb_dropped")
@@ -262,6 +266,70 @@ def main():
                     #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
 
 
+            bomb_updated = False
+
+            for i in range(len(bomb_pickups["tick"])):
+                #print(type(bomb_pickups))
+                if(bomb_pickups["tick"][i+bomb_pickups_index] <= y+first_tick_of_round):
+                    if(bomb_pickups["tick"][i+bomb_pickups_index] > most_updated_tick):
+                        current_bomb_holder = steamID_to_array[bomb_pickups["user_steamid"][i+bomb_pickups_index]]
+                        most_updated_tick = bomb_pickups["tick"][i+bomb_pickups_index]
+
+                    bomb_updated = True
+                else:
+                    bomb_pickups = bomb_pickups[i:]
+                    if(bomb_updated):
+                        bomb_pickups_index += i
+                    break
+
+            
+            bomb_updated = False
+
+            #print(bomb_drops["tick"])
+
+            for i in range(len(bomb_drops["tick"])):
+                if(bomb_drops["tick"][i+bomb_drops_index] <= y+first_tick_of_round):
+                    if(bomb_drops["tick"][i+bomb_drops_index] > most_updated_tick):
+                        current_bomb_holder = None
+                        most_updated_tick = bomb_drops["tick"][i+bomb_drops_index]
+
+                    bomb_updated = True
+                else:
+                    bomb_drops = bomb_drops[i:]
+                    if(bomb_updated):
+                        bomb_drops_index += i
+                    break
+
+            
+            #print(bomb_plants)
+            #print(bomb_plants_index,"!")
+
+            bomb_updated = False
+
+            for i in range(len(bomb_plants["tick"])):
+                if(bomb_plants["tick"][i+bomb_plants_index] <= y+first_tick_of_round):
+                    if(bomb_plants["tick"][i+bomb_plants_index] > most_updated_tick):
+                        current_bomb_holder = None
+                        most_updated_tick = bomb_plants["tick"][i+bomb_plants_index]
+                        #bomb_updated = True
+                    bomb_updated = True
+                else:
+                    bomb_plants = bomb_plants[i:]
+                    if(bomb_updated):
+                        bomb_plants_index += i
+                    break
+
+
+            if(current_bomb_holder != None):
+                bomb_pos.append(players[current_bomb_holder].position[y])
+            else:
+                if(y==0):
+                    bomb_pos.append((1136.0, 32.0, -164.78845))
+                else:      
+                    bomb_pos.append(bomb_pos[-1])
+
+
+
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
             for z in range(0, num_players):
                 
@@ -332,7 +400,7 @@ def main():
                 #    break
                 #players_equiped[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].append()
 
-                draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser)
+                draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser, current_bomb_holder==z)
                 #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
                 #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
@@ -345,67 +413,6 @@ def main():
             #print(bomb_pickups["tick"])
             #print(bomb_pickups_index)
 
-            bomb_updated = False
-
-            for i in range(len(bomb_pickups["tick"])):
-                #print(type(bomb_pickups))
-                if(bomb_pickups["tick"][i+bomb_pickups_index] <= y+first_tick_of_round):
-                    if(bomb_pickups["tick"][i+bomb_pickups_index] > most_updated_tick):
-                        current_bomb_holder = steamID_to_array[bomb_pickups["user_steamid"][i+bomb_pickups_index]]
-                        most_updated_tick = bomb_pickups["tick"][i+bomb_pickups_index]
-
-                    bomb_updated = True
-                else:
-                    bomb_pickups = bomb_pickups[i:]
-                    if(bomb_updated):
-                        bomb_pickups_index += i
-                    break
-
-            
-            bomb_updated = False
-
-            #print(bomb_drops["tick"])
-
-            for i in range(len(bomb_drops["tick"])):
-                if(bomb_drops["tick"][i+bomb_drops_index] <= y+first_tick_of_round):
-                    if(bomb_drops["tick"][i+bomb_drops_index] > most_updated_tick):
-                        current_bomb_holder = None
-                        most_updated_tick = bomb_drops["tick"][i+bomb_drops_index]
-
-                    bomb_updated = True
-                else:
-                    bomb_drops = bomb_drops[i:]
-                    if(bomb_updated):
-                        bomb_drops_index += i
-                    break
-
-            
-            #print(bomb_plants)
-            #print(bomb_plants_index,"!")
-
-            bomb_updated = False
-
-            for i in range(len(bomb_plants["tick"])):
-                if(bomb_plants["tick"][i+bomb_plants_index] <= y+first_tick_of_round):
-                    if(bomb_plants["tick"][i+bomb_plants_index] > most_updated_tick):
-                        current_bomb_holder = None
-                        most_updated_tick = bomb_plants["tick"][i+bomb_plants_index]
-                        #bomb_updated = True
-                    bomb_updated = True
-                else:
-                    bomb_plants = bomb_plants[i:]
-                    if(bomb_updated):
-                        bomb_plants_index += i
-                    break
-
-
-            if(current_bomb_holder != None):
-                bomb_pos.append(players[current_bomb_holder].position[y])
-            else:
-                if(y==0):
-                    bomb_pos.append((1136.0, 32.0, -164.78845))
-                else:      
-                    bomb_pos.append(bomb_pos[-1])
 
 
             #print(bomb_pos)
@@ -522,7 +529,7 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
     #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)
 
 #player is player object, tick is tick of round, frame is the frame to draw on
-def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2):
+def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2, hasBomb):
 
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
@@ -582,6 +589,12 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         #print(player_equipped)
 
         overlay_image(frame, "weapons/"+held_item+".png", (pos_x, pos_y-50), 1.0, 0.25)
+
+
+        if(player.HasDefuser):
+            overlay_image(frame, "defuse_kit.png", (pos_x, pos_y+50), 1.0, 0.25)
+        elif(hasBomb):
+            overlay_image(frame, "bomb_icon.png", (pos_x, pos_y+50), 1.0, 0.25)
 
         #if(player.HasBomb[tick] == 1):
         #    overlay_image(frame)
