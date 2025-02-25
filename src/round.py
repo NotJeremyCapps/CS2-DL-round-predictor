@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 class Round:
-    def __init__(self, round_title="",round_num=0, map_name=None, demo_data_root="../game_demos", enums_path:str="enums.json"):
+    def __init__(self, round_title="",round_num=0, map_name=None, demo_data_root="../game_demos", need_write=True, enums_path:str="enums.json"):
 
         self.round_num=round_num
         self.round_title = round_title
@@ -28,11 +28,12 @@ class Round:
         self.df = pd.DataFrame()
         self.other_dfs = {}
 
-        self.preprocessed_dir_pth = os.path.join(demo_data_root, "preprocessed", map_name)
-        os.makedirs(self.preprocessed_dir_pth, exist_ok=True)
+        if(need_write):
+            self.preprocessed_dir_pth = os.path.join(demo_data_root, "preprocessed", map_name)
+            os.makedirs(self.preprocessed_dir_pth, exist_ok=True)
 
-        self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
-        self.round_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds.txt")
+            self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
+            self.round_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds.txt")
 
         #self.round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
         #self.round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")

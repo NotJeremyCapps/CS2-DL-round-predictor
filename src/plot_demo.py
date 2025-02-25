@@ -1,8 +1,10 @@
 from awpy import Demo
 from awpy import plot
 from player import Player
+from round import Round
 import math
 from typing import Sequence
+import json
 #import sys
 
 #sys.path.append("/c/Users/notje/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/local-packages/Python311/site-packages/opencv_cuda/install_script.py")
@@ -33,6 +35,10 @@ FPS = 60
 
 FOURCC = cv2.VideoWriter_fourcc(*'XVID')
 
+weapon_translate_file = open("weapon_translate.json", 'r')
+weapon_translate = json.loads(weapon_translate_file.read())
+weapon_translate_file.close()
+
 def main():
 
     # Example: Read frames from folder
@@ -45,6 +51,10 @@ def main():
 
 
     #f = open("test.txt", "w")
+
+    #weapon_translate_file = open("weapon_translate.json", 'r')
+    #weapon_translate = json.loads(weapon_translate_file.read())
+    #weapon_translate_file.close()
 
 
     parser = Demo(PATH + DEMO_NAME)
@@ -161,7 +171,10 @@ def main():
         for i in range(0,num_players):
             players.append(Player(name=f"player{i}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
             players_equipped.append([])
- 
+
+        current_round = Round(round_num=round_num, need_write=False)
+
+        current_round.init_headers()
         
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
             list_pos = []
@@ -202,6 +215,8 @@ def main():
                         prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
                     #print(z, "TEST ", round_num)
 
+            current_round.load_round_data(round_dict=parser.rounds)
+
             for z in range(0, num_players):
                 if(math.isnan(players[z].position[y][0]) or math.isnan(players[z].position[y][1])):
                     if(y!=0):
@@ -212,6 +227,8 @@ def main():
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
             for z in range(0, num_players):
+                
+                
 
                 update_found = 0
                 for i in range(len(equip_list[0])):
@@ -220,7 +237,14 @@ def main():
 
                     #print(equip_list[0][i], " ", y)
                     if((equip_list[0][i] == y+first_tick_of_round) and (equip_list[1][i] == players[z].steam_id)):
-                        players_equipped[z].append(equip_list[2][i])
+                        if(equip_list[2][i] == "deagle" or equip_list[2][i] == "m4a1" or equip_list[2][i] == "hkp2000" or equip_list[2][i] == "mp7"):
+                            current_tick_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
+                            for i in range(len(current_tick_weapons)):
+                                if(str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
+                                    players_equipped[z].append(weapon_translate[current_tick_weapons["active_weapon_name"][i]])
+                                    break
+                        else:
+                            players_equipped[z].append(equip_list[2][i])
                         equip_list[0].pop(i)
                         equip_list[1].pop(i)
                         equip_list[2].pop(i)
@@ -234,14 +258,17 @@ def main():
                     players_equipped[z].append(players_equipped[z][-1])
                 elif(update_found == 0 and (y == 0)):
                     current_tick_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
-                    #current_weapon = "knife"
+                    current_weapon = None
                     for i in range(len(current_tick_weapons)):
                         #print(type(current_tick_weapons["steamid"][i]))
                         #print(type(players[z].steam_id))
 
                         #print(current_tick_weapons["steamid"])
+                        if(current_tick_weapons["active_weapon_name"][i] == None and str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
+                            break
+
                         if(str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
-                            current_weapon = current_tick_weapons["active_weapon_name"][i]
+                            current_weapon = weapon_translate[current_tick_weapons["active_weapon_name"][i]]
                             break
 
                     #print(current_tick_weapons["active_weapon_name"][i])
@@ -250,7 +277,7 @@ def main():
                         current_weapon = "knife"
 
 
-                    print(current_weapon)
+                    #print(current_weapon)
 
                     players_equipped[z].append(current_weapon)
 
@@ -265,7 +292,7 @@ def main():
                 #    break
                 #players_equiped[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].append()
 
-                draw_player(players[z], y, frame, players_equipped[z])
+                draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser)
                 #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
                 #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
@@ -362,7 +389,7 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
     #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)
 
 #player is player object, tick is tick of round, frame is the frame to draw on
-def draw_player(player, tick, frame, player_equipped):
+def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2):
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
     player_size = round(((player.position[tick][2]+370)/79) + 10)
@@ -391,13 +418,32 @@ def draw_player(player, tick, frame, player_equipped):
         
         if(held_item == "knife"):
             held_item = "knife_ct" if(player.team_name == "CT") else "knife_t"
+        #elif(held_item == "deagle" or held_item == "m4a1" or held_item == "hkp2000" or held_item == "mp7"):
+        #    current_tick_weapons = demoparser2.parse_ticks(wanted_props=["active_weapon_name"], ticks=[tick+first_tick_of_round])
+        #    for i in range(len(current_tick_weapons)):
+        #        if(str(current_tick_weapons["steamid"][i]) == player.steam_id):
+        #            held_item = weapon_translate[current_tick_weapons["active_weapon_name"][i]]
+        #            break
+
+        #    print("deag")
+            #check for deag vs r8
+        #elif(held_item == "m4a1"):
+            #check for a4 vs a1s
+        #    print("m4")
+        #elif(held_item == "hkp2000"):
+        #    print("p2k")
+            #check for p2k vs usps
+        #elif(held_item == "mp7"):
+        #    print("mp7")
+            #check for mp7 vs mp5sd
 
         #TODO some weapons are considered the same
         #deag & r8
         #a1 & a4
         #p2k & usp
+        #mp7 & mp5sd
 
-        print("HELD: ", held_item)
+        #print("HELD: ", held_item)
         #print(type(equip_list[0]))
         #print(player_equipped)
 
