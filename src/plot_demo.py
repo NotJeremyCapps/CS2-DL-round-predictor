@@ -1,5 +1,6 @@
 from awpy import Demo
 from awpy import plot
+import cv2.text
 from player import Player
 import math
 from typing import Sequence
@@ -57,6 +58,8 @@ def main():
 
 
     parser = Demo(PATH + DEMO_NAME)
+
+    print(parser.player_props)
 
     #SOME DEMOS DO NOT HAVE WARMUP LEADING TO FIRST PISTOL ROUND NOT BEING PARSED!
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
@@ -572,8 +575,9 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
 
     else:
         overlay = frame.copy()
-        cv2.ellipse(overlay, (pos_x, pos_y), (60,60), 0, player.yaw[tick]-45, player.yaw[tick]+45, (255,255,255), -1)
+        cv2.ellipse(overlay, (pos_x, pos_y), (60,60), 0, -player.yaw[tick]-45, -player.yaw[tick]+45, (255,255,255), -1)
         cv2.addWeighted(frame, 0.8, overlay, 0.2, 0, frame)
+        #cv2.putText(frame, "DEBUG:"+str(player.yaw[tick]), (pos_x, pos_y-50), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
         cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
         if(player.HasHelmet[tick] == 1):
             overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
