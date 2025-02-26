@@ -78,7 +78,12 @@ def main():
 
     #print(parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'"))
 
-    defuser_pickups = parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'")
+    defuser_pickups = parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'").sort_index(ignore_index=True)
+
+    #print(defuser_pickups)
+    #print("test")
+
+    defuser_pickups_index = 0
 
     bomb_pickups = parser.parser.parse_event(event_name="bomb_pickup")
     bomb_drops = parser.parser.parse_event(event_name="bomb_dropped")
@@ -123,9 +128,7 @@ def main():
 
     #for z in range(0,10):
     #    players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
-    list_pos = []
-    list_set = []
-    dict_list = []
+
     #count = 0
 
     #sprint(cv2.__file__)
@@ -200,10 +203,12 @@ def main():
 
         players:list[Player] = []
         players_equipped = []
+        player_has_defuser = []
 
         for i in range(0,num_players):
             players.append(Player(name=f"player{i}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
             players_equipped.append([])
+            player_has_defuser.append([])
 
         round_dict = parser.rounds
 
@@ -264,6 +269,29 @@ def main():
                     else:
                         players[z].position[y] = (0,0,0)
                     #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
+
+
+            defuser_updated = False
+
+            for i in range(len(defuser_pickups["tick"])):
+                if(defuser_pickups["tick"][i+defuser_pickups_index] <= y+first_tick_of_round):
+                    player_has_defuser[steamID_to_array[defuser_pickups["user_steamid"][i+defuser_pickups_index]]].append(True)
+                    defuser_updated = True
+                else:
+                    defuser_pickups = defuser_pickups[i:]
+                    if(defuser_updated):
+                        defuser_pickups_index += i
+                    break
+
+            for i in range(num_players):
+                while(len(player_has_defuser[i]) <= y):
+                    if(len(player_has_defuser[i]) == 0):
+                        player_has_defuser[i].append(False)
+                    elif(players[z].health == 0):
+                        player_has_defuser[i].append(False)
+                    else:
+                        player_has_defuser[i].append(player_has_defuser[i][-1])
+
 
 
             bomb_updated = False
@@ -400,7 +428,7 @@ def main():
                 #    break
                 #players_equiped[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].append()
 
-                draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser, current_bomb_holder==z)
+                draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser, current_bomb_holder==z, player_has_defuser[z][y])
                 #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
                 #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
                 #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
@@ -511,7 +539,7 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
 
 
     #blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
-
+    #if(type(image_path) == )
     overlay = cv2.imread(ASSETS_PATH + image_path, cv2.IMREAD_UNCHANGED)
     overlay = cv2.resize(overlay, (int(overlay.shape[1]*resize), int(overlay.shape[0]*resize)))
     overlay_no_alpha = cv2.imread(ASSETS_PATH + image_path)
@@ -529,7 +557,7 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
     #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)
 
 #player is player object, tick is tick of round, frame is the frame to draw on
-def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2, hasBomb):
+def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2, hasBomb, hasDefuser):
 
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
@@ -543,11 +571,17 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         cv2.line(frame, (pos_x-player_size_offset, pos_y+player_size_offset), (pos_x+player_size_offset, pos_y-player_size_offset), player_color, 5)
 
     else:
+        overlay = frame.copy()
+        cv2.ellipse(overlay, (pos_x, pos_y), (60,60), 0, player.yaw[tick]-45, player.yaw[tick]+45, (255,255,255), -1)
+        cv2.addWeighted(frame, 0.8, overlay, 0.2, 0, frame)
         cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
         if(player.HasHelmet[tick] == 1):
             overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
         elif(player.HasArmor[tick] == 1):
             overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
+
+        cv2.rectangle(frame, (pos_x-20, pos_y-12), (pos_x-15, pos_y+13), (0,0,255), -1)
+        cv2.rectangle(frame, (pos_x-20, pos_y+13-math.ceil(player.health[tick]/4)), (pos_x-15, pos_y+13), (0,255,0), -1)
 
         held_item = player_equipped[tick]
         #held_item = "knife"
@@ -587,11 +621,14 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         #print("HELD: ", held_item)
         #print(type(equip_list[0]))
         #print(player_equipped)
+        try:
+            overlay_image(frame, "weapons/"+held_item+".png", (pos_x, pos_y-50), 1.0, 0.25)
+        except:
+            print("error at player ", player.steam_id, " with weapon ", held_item)
+            exit()
 
-        overlay_image(frame, "weapons/"+held_item+".png", (pos_x, pos_y-50), 1.0, 0.25)
 
-
-        if(player.HasDefuser):
+        if(hasDefuser):
             overlay_image(frame, "defuse_kit.png", (pos_x, pos_y+50), 1.0, 0.25)
         elif(hasBomb):
             overlay_image(frame, "bomb_icon.png", (pos_x, pos_y+50), 1.0, 0.25)
@@ -622,8 +659,22 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
             #frame = cv2.add(frame, armor)
 
 def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb):
+    #print("plant time: ", plant_time)
     if(not player_has_bomb):
         overlay_image(frame, "bomb_icon.png", (int(translate_position(bomb_position[tick][0], "x")), int(translate_position(bomb_position[tick][1], "y"))), 1.0, 1)#(bomb_position[3]+370/400)+0.2))
+    if(plant_time == None):
+        plant_time = 100000
+
+    if(plant_time>tick):
+        round_timer = 115 - math.floor(tick/60)
+        timer_display = str(math.floor(round_timer/60))+":"+str(round_timer%60)
+        if(len(timer_display) == 3):
+            timer_display = str(math.floor(round_timer/60))+":0"+str(round_timer%60)
+        cv2.putText(frame, str(math.floor(round_timer/60))+":"+str(round_timer%60), (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+    else:
+        bomb_timer = 40 - math.floor((tick-plant_time)/60)
+        cv2.putText(frame, "0:"+str(bomb_timer), (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
+        overlay_image(frame, "bomb_tick.png", (int(translate_position(bomb_position[tick][0], "x")), int(translate_position(bomb_position[tick][1], "y"))), 1.0, 1)
     #print("test")
 
 main()
