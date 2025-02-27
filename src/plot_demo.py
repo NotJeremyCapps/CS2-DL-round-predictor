@@ -31,7 +31,7 @@ ALPHA_THRESH = 0
 
 FRAME_SIZE = (1024, 1024)
 
-FPS = 60
+FPS = 64
 
 FOURCC = cv2.VideoWriter_fourcc(*'XVID')
 
@@ -570,8 +570,10 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
     player_color = CT_COLOR if(player.team_name == "CT") else T_COLOR
 
     if(player.health[tick] == 0):
-        cv2.line(frame, (pos_x-player_size_offset, pos_y-player_size_offset), (pos_x+player_size_offset, pos_y+player_size_offset), player_color, 5)
-        cv2.line(frame, (pos_x-player_size_offset, pos_y+player_size_offset), (pos_x+player_size_offset, pos_y-player_size_offset), player_color, 5)
+        overlay = frame.copy()
+        cv2.line(overlay, (pos_x-player_size_offset, pos_y-player_size_offset), (pos_x+player_size_offset, pos_y+player_size_offset), player_color, 5)
+        cv2.line(overlay, (pos_x-player_size_offset, pos_y+player_size_offset), (pos_x+player_size_offset, pos_y-player_size_offset), player_color, 5)
+        cv2.addWeighted(frame, 0.5, overlay, 0.5, 0, frame)
 
     else:
         overlay = frame.copy()
@@ -670,14 +672,21 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb):
         plant_time = 100000
 
     if(plant_time>tick):
-        round_timer = 115 - math.floor(tick/60)
+        round_timer = 115 - math.floor(tick/64)
         timer_display = str(math.floor(round_timer/60))+":"+str(round_timer%60)
+        #print(len(timer_display))
         if(len(timer_display) == 3):
             timer_display = str(math.floor(round_timer/60))+":0"+str(round_timer%60)
-        cv2.putText(frame, str(math.floor(round_timer/60))+":"+str(round_timer%60), (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+        cv2.putText(frame, timer_display, (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
     else:
-        bomb_timer = 40 - math.floor((tick-plant_time)/60)
-        cv2.putText(frame, "0:"+str(bomb_timer), (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
+        bomb_timer = 40 - math.floor((tick-plant_time)/64)
+        if(bomb_timer < 10):
+            if(bomb_timer < 0):
+                bomb_timer = 0
+            timer_display = "0:0"+str(bomb_timer)
+        else:
+            timer_display = "0:"+str(bomb_timer)
+        cv2.putText(frame, timer_display, (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
         overlay_image(frame, "bomb_tick.png", (int(translate_position(bomb_position[tick][0], "x")), int(translate_position(bomb_position[tick][1], "y"))), 1.0, 1)
     #print("test")
 
