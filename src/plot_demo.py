@@ -582,9 +582,9 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         #cv2.putText(frame, "DEBUG:"+str(player.yaw[tick]), (pos_x, pos_y-50), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
         cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
         if(player.HasHelmet[tick] == 1):
-            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
+            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.1)
         elif(player.HasArmor[tick] == 1):
-            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.2)
+            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.1)
 
         cv2.rectangle(frame, (pos_x-20, pos_y-12), (pos_x-15, pos_y+13), (0,0,255), -1)
         cv2.rectangle(frame, (pos_x-20, pos_y+13-math.ceil(player.health[tick]/4)), (pos_x-15, pos_y+13), (0,255,0), -1)
@@ -635,9 +635,9 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
 
 
         if(hasDefuser):
-            overlay_image(frame, "defuse_kit.png", (pos_x, pos_y+50), 1.0, 0.25)
+            overlay_image(frame, "defuse_kit.png", (pos_x+int(player_size*0.707)-10 , pos_y+int(player_size*0.707)-10), 1.0, 0.5)
         elif(hasBomb):
-            overlay_image(frame, "bomb_icon.png", (pos_x, pos_y+50), 1.0, 0.25)
+            overlay_image(frame, "bomb_icon.png", (pos_x+int(player_size*0.707)-5, pos_y+int(player_size*0.707)-5), 1.0, 0.6)
 
         #if(player.HasBomb[tick] == 1):
         #    overlay_image(frame)
