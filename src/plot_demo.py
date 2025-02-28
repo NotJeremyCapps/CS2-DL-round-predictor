@@ -16,7 +16,7 @@ import os
 PATH = "../game_demos/"
 #g2-vs-heroic-m3-mirage.dem
 #00nation-vs-eclot-m1-mirage.dem
-DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"#"replay.dem"
+DEMO_NAME = "replay.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -65,10 +65,14 @@ def main():
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
     round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
 
+
+    all_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"])
+
     equipped_items_all = parser.parser.parse_event(event_name="item_equip")
-    equipped_ticks = equipped_items_all["tick"].tolist()
-    equipped_steamid = equipped_items_all["user_steamid"].tolist()
-    equipped_items = equipped_items_all["item"].tolist()
+    #print(equipped_items_all.columns)
+    #equipped_ticks = equipped_items_all["tick"].tolist()
+    #equipped_steamid = equipped_items_all["user_steamid"].tolist()
+    #equipped_items = equipped_items_all["item"].tolist()
 #"is_bomb_dropped","inventory","inventory_as_ids"
 
     #testing = parser.parser.parse_ticks(wanted_props=["inventory","is_bomb_dropped","is_bomb_planted","dropped_at_time"])
@@ -116,7 +120,7 @@ def main():
     #print(equipped_items_all["defindex"])#.columns)
     #for i in equipped_items_all["hassilencer"]:
     #   print(i)
-    equip_list = [equipped_ticks, equipped_steamid, equipped_items]
+    #equip_list = [equipped_ticks, equipped_steamid, equipped_items]
 
     #equipped_items.values.tolist()
 
@@ -208,10 +212,23 @@ def main():
         players_equipped = []
         player_has_defuser = []
 
+        end_of_round = round_ends[round_num]
+        #print(equipped_items_all)
+        equips_this_round = equipped_items_all.query("tick <= @end_of_round")
+        equipped_items_all= equipped_items_all[len(equips_this_round):]
+        #print(equipped_items_all)
+        players_equip_time = []
+        player_equip_weapon = []
+        player_equip_tick = []
         for i in range(0,num_players):
             players.append(Player(name=f"player{i}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
             players_equipped.append([])
             player_has_defuser.append([])
+            current_steamid = unique_player_ids[i]
+            players_equip_time.append(equips_this_round.query("user_steamid == @current_steamid"))
+            player_equip_weapon.append(players_equip_time[i]["item"].tolist())
+            player_equip_tick.append(players_equip_time[i]["tick"].tolist())
+            #equipped_items_all.query("tick <= end_of_round")
 
         round_dict = parser.rounds
 
@@ -223,7 +240,6 @@ def main():
         bomb_pos = []
 
         most_updated_tick = 0
-
 
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
             list_pos = []
@@ -360,13 +376,43 @@ def main():
                     bomb_pos.append(bomb_pos[-1])
 
 
+            #current_tick_weapons2 = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
+            #for i in range(len(current_tick_weapons2)):
+            #    if(str(current_tick_weapons2["steamid"][i]) == "76561198799340122"): #"76561198160709585"):
+            #        print(current_tick_weapons2["active_weapon_name"][i])
+
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
+
+            current_tick_weapons = all_weapons.query('tick == @y+@first_tick_of_round')
+            weapon_list = current_tick_weapons["active_weapon_name"].to_list()
+            id_list = current_tick_weapons["steamid"].to_list()
+            #print(current_tick_weapons)
             for z in range(0, num_players):
                 
-                
+                #print(player_equip_tick[z])
+                #print(len(player_equip_tick[z]), len(player_equip_weapon[z]))
+                while (len(player_equip_tick[z]) > 1 and player_equip_tick[z][1] <= y+first_tick_of_round):
+                    player_equip_tick[z] = player_equip_tick[z][1:]
+                    player_equip_weapon[z] = player_equip_weapon[z][1:]
+                    #for i in range(len(players_equip_time[i])):
+                    #    if(players_equip_time[z]["tick"][i] < y+first_tick_of_round):
 
-                update_found = 0
+                
+                for i in range(len(current_tick_weapons)):
+                    if(str(id_list[i]) == players[z].steam_id):
+                        if(weapon_list[i] == None):
+                            if(len(player_equip_weapon[z]) != 0):
+                                players_equipped[z].append(player_equip_weapon[z][0])
+                            else:
+                                players_equipped[z].append(players_equipped[z][-1])
+                            #players_equipped[z].append("c4")
+                            #for j in range(len(equip_list[0]))
+                        else:
+                            players_equipped[z].append(weapon_translate[weapon_list[i]])
+                        break
+
+                """update_found = 0
                 for i in range(len(equip_list[0])):
                     #print(type(equip_list[0][i]), type(equip_list[1][i]), type(players[z].steam_id))
                     #print(int(equip_list[1][i]), " ", players[z].steam_id)
@@ -418,7 +464,7 @@ def main():
 
                     #print(current_weapon)
 
-                    players_equipped[z].append(current_weapon)
+                    players_equipped[z].append(current_weapon)"""
 
                 #if(players_equipped[z][-1] == "hkp2000"):
 
@@ -465,7 +511,7 @@ def main():
 
             #print(bomb_pos.append(bomb_pos[-1]))
 
-            draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None)
+            draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None, 0.6)
 
             video_writer.write(frame)
                 #print("TEAM: ", players[z].team_name)
@@ -539,9 +585,41 @@ def translate_position(position, axis):
 
 
 def overlay_image(frame, image_path, coordinates, opacity, resize):
+    #background = cv2.imread('field.jpg')
+    to_be_combined = frame.copy()
+    overlay = cv2.imread(ASSETS_PATH + image_path, cv2.IMREAD_UNCHANGED)  # IMREAD_UNCHANGED => open image with the alpha channel
+    overlay = cv2.resize(overlay, (int(overlay.shape[1]*resize), int(overlay.shape[0]*resize)))
 
+    # separate the alpha channel from the color channels
+    alpha_channel = overlay[:, :, 3] / 255 # convert from 0-255 to 0.0-1.0
+    overlay_colors = overlay[:, :, :3]
 
-    #blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
+    # To take advantage of the speed of numpy and apply transformations to the entire image with a single operation
+    # the arrays need to be the same shape. However, the shapes currently looks like this:
+    #    - overlay_colors shape:(width, height, 3)  3 color values for each pixel, (red, green, blue)
+    #    - alpha_channel  shape:(width, height, 1)  1 single alpha value for each pixel
+    # We will construct an alpha_mask that has the same shape as the overlay_colors by duplicate the alpha channel
+    # for each color so there is a 1:1 alpha channel for each color channel
+    alpha_mask = alpha_channel[:, :, np.newaxis]
+
+    # The background image is larger than the overlay so we'll take a subsection of the background that matches the
+    # dimensions of the overlay.
+    # NOTE: For simplicity, the overlay is applied to the top-left corner of the background(0,0). An x and y offset
+    # could be used to place the overlay at any position on the background.
+    h, w = overlay.shape[:2]
+    background_subsection = to_be_combined[coordinates[1]:h+coordinates[1], coordinates[0]:w+coordinates[0]]
+
+    # combine the background with the overlay image weighted by alpha
+    composite = background_subsection * (1 - alpha_mask) + overlay_colors * alpha_mask
+
+    # overwrite the section of the background image that has been updated
+    to_be_combined[coordinates[1]:h+coordinates[1], coordinates[0]:w+coordinates[0]] = composite
+
+    cv2.addWeighted(to_be_combined, opacity, frame, 1-opacity, 0, frame)
+
+    #cv2.imwrite('combined.png', background)
+
+    """#blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
     #if(type(image_path) == )
     overlay = cv2.imread(ASSETS_PATH + image_path, cv2.IMREAD_UNCHANGED)
     overlay = cv2.resize(overlay, (int(overlay.shape[1]*resize), int(overlay.shape[0]*resize)))
@@ -557,7 +635,7 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
                     #this is a mess
                     frame[coordinates[1] + i, coordinates[0] + j] = (math.floor(overlay_no_alpha[i, j][0]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][0]*(1-(opacity*(a[i][j]/255)))), math.floor(overlay_no_alpha[i, j][1]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][1]*(1-(opacity*(a[i][j]/255)))), math.floor(overlay_no_alpha[i, j][2]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][2]*(1-(opacity*(a[i][j]/255)))))
 
-    #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)
+    #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)"""
 
 #player is player object, tick is tick of round, frame is the frame to draw on
 def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2, hasBomb, hasDefuser):
@@ -565,11 +643,12 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
     pos_x = int(translate_position(player.position[tick][0], "x"))
     pos_y = int(translate_position(player.position[tick][1], "y"))
     player_size = round(((player.position[tick][2]+370)/79) + 10)
-    player_size_offset = round((2*player_size)/3)
+    #player_size_offset = round((2*player_size)/3)
 
     player_color = CT_COLOR if(player.team_name == "CT") else T_COLOR
 
     if(player.health[tick] == 0):
+        player_size_offset = round((2*player_size)/3)
         overlay = frame.copy()
         cv2.line(overlay, (pos_x-player_size_offset, pos_y-player_size_offset), (pos_x+player_size_offset, pos_y+player_size_offset), player_color, 5)
         cv2.line(overlay, (pos_x-player_size_offset, pos_y+player_size_offset), (pos_x+player_size_offset, pos_y-player_size_offset), player_color, 5)
@@ -580,11 +659,13 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         cv2.ellipse(overlay, (pos_x, pos_y), (60,60), 0, -player.yaw[tick]-45, -player.yaw[tick]+45, (255,255,255), -1)
         cv2.addWeighted(frame, 0.8, overlay, 0.2, 0, frame)
         #cv2.putText(frame, "DEBUG:"+str(player.yaw[tick]), (pos_x, pos_y-50), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
+        if(player.Flash[tick] == 1):
+            overlay_image(frame, "flashed.png", (pos_x-int(player_size*1.6), pos_y-int(player_size*1.9)), 1, player_size/38)
         cv2.circle(frame, (pos_x, pos_y), player_size, player_color, -1)
         if(player.HasHelmet[tick] == 1):
-            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.1)
+            overlay_image(frame, "head_armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 0.8, (player_size/18)+0.2)
         elif(player.HasArmor[tick] == 1):
-            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 1.0, (player_size/14)+0.1)
+            overlay_image(frame, "armor.png", (pos_x-round(player_size*0.607), pos_y-round(player_size*0.607)), 0.8, (player_size/18)+0.2)
 
         cv2.rectangle(frame, (pos_x-20, pos_y-12), (pos_x-15, pos_y+13), (0,0,255), -1)
         cv2.rectangle(frame, (pos_x-20, pos_y+13-math.ceil(player.health[tick]/4)), (pos_x-15, pos_y+13), (0,255,0), -1)
@@ -628,7 +709,7 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         #print(type(equip_list[0]))
         #print(player_equipped)
         try:
-            overlay_image(frame, "weapons/"+held_item+".png", (pos_x, pos_y-50), 1.0, 0.25)
+            overlay_image(frame, "weapons/"+held_item+".png", (pos_x+int(player_size*0.707), pos_y-int(player_size*0.707)-10), 1.0, 0.5)
         except:
             print("error at player ", player.steam_id, " with weapon ", held_item)
             exit()
@@ -664,10 +745,10 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
 
             #frame = cv2.add(frame, armor)
 
-def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb):
+def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb, model_predict):
     #print("plant time: ", plant_time)
     if(not player_has_bomb):
-        overlay_image(frame, "bomb_icon.png", (int(translate_position(bomb_position[tick][0], "x")), int(translate_position(bomb_position[tick][1], "y"))), 1.0, 1)#(bomb_position[3]+370/400)+0.2))
+        overlay_image(frame, "bomb_icon.png", (int(translate_position(bomb_position[tick][0], "x"))-15, int(translate_position(bomb_position[tick][1], "y"))-16), 1.0, 0.8)#(bomb_position[3]+370/400)+0.2))
     if(plant_time == None):
         plant_time = 100000
 
@@ -677,7 +758,7 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb):
         #print(len(timer_display))
         if(len(timer_display) == 3):
             timer_display = str(math.floor(round_timer/60))+":0"+str(round_timer%60)
-        cv2.putText(frame, timer_display, (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+        cv2.putText(frame, timer_display, (450,930), cv2.FONT_HERSHEY_PLAIN, 4, (255,255,255), 4, cv2.LINE_8)
     else:
         bomb_timer = 40 - math.floor((tick-plant_time)/64)
         if(bomb_timer < 10):
@@ -686,8 +767,16 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb):
             timer_display = "0:0"+str(bomb_timer)
         else:
             timer_display = "0:"+str(bomb_timer)
-        cv2.putText(frame, timer_display, (512,1024), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,255), 2, cv2.LINE_8)
-        overlay_image(frame, "bomb_tick.png", (int(translate_position(bomb_position[tick][0], "x")), int(translate_position(bomb_position[tick][1], "y"))), 1.0, 1)
-    #print("test")
+        cv2.putText(frame, timer_display, (450,930), cv2.FONT_HERSHEY_PLAIN, 4, (0,0,255), 4, cv2.LINE_8)
+        overlay_image(frame, "bomb_tick.png", (int(translate_position(bomb_position[tick][0], "x"))-15, int(translate_position(bomb_position[tick][1], "y"))-25), 1.0, 1.3)
+    
+
+    cv2.rectangle(frame, (212, 50), (212+round(600*model_predict), 100), CT_COLOR, -1)
+    cv2.rectangle(frame, (212+round(600*model_predict), 50), (812, 100), T_COLOR, -1)
+    overlay_image(frame, "CT_icon.png", (137,45), 1, 1)
+    overlay_image(frame, "T_icon.png", (822,45), 1, 1)
+    cv2.putText(frame, f'{100*model_predict: .1f}', (192,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+    cv2.putText(frame, f'{100*(1-model_predict): .1f}', (730,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+
 
 main()

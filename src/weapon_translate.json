@@ -62,5 +62,6 @@
     "High Explosive Grenade" : "hegrenade",
     "Decoy Grenade" : "decoy",
     "Molotov" : "molotov",
-    "Incendiary Grenade" : "incgrenade"
+    "Incendiary Grenade" : "incgrenade",
+    "C4" : "c4"
 }
