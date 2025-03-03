@@ -5,6 +5,7 @@ from player import Player
 import math
 from typing import Sequence
 import json
+import pandas as pd
 #import sys
 
 #sys.path.append("/c/Users/notje/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/local-packages/Python311/site-packages/opencv_cuda/install_script.py")
@@ -59,7 +60,17 @@ def main():
 
     parser = Demo(PATH + DEMO_NAME)
 
-    print(parser.player_props)
+    print(parser.infernos)
+    print(parser.smokes)
+
+    #with open("nades.txt", 'w') as file:
+    #    file.write(parser.grenades.to_string())
+    #file.close()
+
+    #with open("nades2.txt", 'w') as file:
+    #    file.write(parser.parser.parse_grenades().to_string())
+    #file.close()
+    ##print(parser.grenades.columns)
 
     #SOME DEMOS DO NOT HAVE WARMUP LEADING TO FIRST PISTOL ROUND NOT BEING PARSED!
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
@@ -100,6 +111,7 @@ def main():
     bomb_drops_index = 0
     bomb_plants_index = 0
 
+    all_grenades = parser.grenades
 
     #print(bomb_status[0])
     #print(bomb_status[1])
@@ -383,6 +395,15 @@ def main():
 
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
+
+            #doesnt increase efficiency, fix later
+            #for i in range(min(all_grenades.index), max(all_grenades.index)):
+            #    if(all_grenades["tick"][i] < y+first_tick_of_round):
+            #        all_grenades.drop(i)
+            #    else:
+            #        break
+
+            draw_nades(frame, all_grenades, y, first_tick_of_round)
 
             current_tick_weapons = all_weapons.query('tick == @y+@first_tick_of_round')
             weapon_list = current_tick_weapons["active_weapon_name"].to_list()
@@ -777,6 +798,15 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb, 
     overlay_image(frame, "T_icon.png", (822,45), 1, 1)
     cv2.putText(frame, f'{100*model_predict: .1f}', (192,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
     cv2.putText(frame, f'{100*(1-model_predict): .1f}', (730,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+
+def draw_nades(frame, grenades, tick, first_tick_of_round):
+    
+    for i in range(min(grenades.index),max(grenades.index)):
+
+        if(grenades["tick"][i] == tick+first_tick_of_round and str(grenades["X"][i]) != "<NA>" and str(grenades["Y"][i]) != "<NA>"):
+            overlay_image(frame, "weapons/"+grenades["grenade_type"][i]+".png", (round(translate_position(grenades["X"][i], "x")-4) ,round(translate_position(grenades["Y"][i], "y"))-9), 1, 0.5)
+        elif(grenades["tick"][i] > tick+first_tick_of_round):
+           break
 
 
 main()
