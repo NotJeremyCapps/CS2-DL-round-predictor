@@ -60,9 +60,9 @@ def main():
 
     parser = Demo(PATH + DEMO_NAME)
 
-    print(parser.infernos)
-    print(parser.smokes)
-    print(parser.events["hegrenade_detonate"].columns)
+    #print(parser.infernos)
+    #print(parser.smokes.columns)
+    #print(parser.events["hegrenade_detonate"].columns)
 
     #with open("nades.txt", 'w') as file:
     #    file.write(parser.grenades.to_string())
@@ -160,7 +160,13 @@ def main():
         current_round = round_num + 1
         he_detonate_this_round = parser.events["hegrenade_detonate"].query('round == @current_round')
 
-        print(he_detonate_this_round)
+        smokes_this_round = parser.smokes.query('round == @current_round')
+        fires_this_round = parser.infernos.query('round == @current_round')
+
+        print(smokes_this_round)
+        print(fires_this_round)
+
+        #print(min(he_detonate_this_round.index), max(he_detonate_this_round.index))
 
         print("ROUND " + str(round_num+1))
 
@@ -410,7 +416,7 @@ def main():
                     break
 
             #print(all_grenades.columns)
-            draw_nades(frame, all_grenades, y, first_tick_of_round, he_detonate_this_round)
+            draw_nades(frame, all_grenades, y, first_tick_of_round, he_detonate_this_round, smokes_this_round, fires_this_round)
 
             current_tick_weapons = all_weapons.query('tick == @y+@first_tick_of_round')
             weapon_list = current_tick_weapons["active_weapon_name"].to_list()
@@ -805,14 +811,14 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb, 
     cv2.putText(frame, f'{100*model_predict: .1f}', (192,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
     cv2.putText(frame, f'{100*(1-model_predict): .1f}', (730,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
 
-def draw_nades(frame, grenades, tick, first_tick_of_round, he_detonate_this_round):
+def draw_nades(frame, grenades, tick, first_tick_of_round, he_detonate_this_round, smokes_this_round, fires_this_round):
     
-    for i in range(min(he_detonate_this_round.index),max(he_detonate_this_round.index)):
+    for i in range(min(grenades.index),max(grenades.index)):
 
         if(grenades["tick"][i] == tick+first_tick_of_round and str(grenades["X"][i]) != "<NA>" and str(grenades["Y"][i]) != "<NA>"):
             if(grenades["grenade_type"][i] == "he_grenade"):
                 for j in range(min(he_detonate_this_round.index), max(he_detonate_this_round.index)+1):
-                    print("j: ", j)
+                    #print("j: ", j)
                     if(grenades["entity_id"][i] == he_detonate_this_round["entityid"][j]):
                         if(tick+first_tick_of_round < he_detonate_this_round["tick"][j]):
                             overlay_image(frame, "weapons/he_grenade.png", (round(translate_position(grenades["X"][i], "x")-4) ,round(translate_position(grenades["Y"][i], "y"))-9), 1, 0.5)
@@ -823,6 +829,15 @@ def draw_nades(frame, grenades, tick, first_tick_of_round, he_detonate_this_roun
                 overlay_image(frame, "weapons/"+grenades["grenade_type"][i]+".png", (round(translate_position(grenades["X"][i], "x")-4) ,round(translate_position(grenades["Y"][i], "y"))-9), 1, 0.5)
         elif(grenades["tick"][i] > tick+first_tick_of_round):
            break
+    
+    #print(smokes_this_round.columns)
+    if(len(smokes_this_round) > 0):
+        for i in range(min(smokes_this_round.index), max(smokes_this_round.index)+1):
+            if(smokes_this_round["start_tick"][i] >= tick+first_tick_of_round and smokes_this_round["end_tick"][i] <= tick+first_tick_of_round):
+                overlay_image(frame, "cloud.png", (round(translate_position(smokes_this_round["X"][i], "x")) ,round(translate_position(smokes_this_round["Y"][i], "y"))), 1, 1)
+
+            if(smokes_this_round["start_tick"][i] > tick+first_tick_of_round and smokes_this_round["end_tick"][i] > tick+first_tick_of_round):
+                break
 
 
 main()
