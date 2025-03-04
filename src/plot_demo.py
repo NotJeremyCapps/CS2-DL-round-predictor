@@ -830,14 +830,22 @@ def draw_nades(frame, grenades, tick, first_tick_of_round, he_detonate_this_roun
         elif(grenades["tick"][i] > tick+first_tick_of_round):
            break
     
-    #print(smokes_this_round.columns)
+    #print(len(smokes_this_round))
     if(len(smokes_this_round) > 0):
         for i in range(min(smokes_this_round.index), max(smokes_this_round.index)+1):
-            if(smokes_this_round["start_tick"][i] >= tick+first_tick_of_round and smokes_this_round["end_tick"][i] <= tick+first_tick_of_round):
+            #print(smokes_this_round["start_tick"][i], smokes_this_round["end_tick"][i], tick+first_tick_of_round)
+            if(smokes_this_round["start_tick"][i] <= tick+first_tick_of_round and smokes_this_round["end_tick"][i] >= tick+first_tick_of_round):
                 overlay_image(frame, "cloud.png", (round(translate_position(smokes_this_round["X"][i], "x")) ,round(translate_position(smokes_this_round["Y"][i], "y"))), 1, 1)
 
-            if(smokes_this_round["start_tick"][i] > tick+first_tick_of_round and smokes_this_round["end_tick"][i] > tick+first_tick_of_round):
+            if(smokes_this_round["start_tick"][i] > tick+first_tick_of_round):
                 break
+    
+    if(len(fires_this_round) > 0):
+        for i in range(min(fires_this_round.index), max(fires_this_round.index)+1):
+            if(fires_this_round["start_tick"][i] <= tick+first_tick_of_round and fires_this_round["end_tick"][i] >= tick+first_tick_of_round):
+                overlay_image(frame, "fire.png", (round(translate_position(fires_this_round["X"][i], "x")) ,round(translate_position(fires_this_round["Y"][i], "y"))), 1, 1)
 
+            if(fires_this_round["start_tick"][i] > tick+first_tick_of_round):
+                break
 
 main()
