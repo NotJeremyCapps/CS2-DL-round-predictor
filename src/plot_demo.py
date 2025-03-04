@@ -62,6 +62,7 @@ def main():
 
     print(parser.infernos)
     print(parser.smokes)
+    print(parser.events["hegrenade_detonate"].columns)
 
     #with open("nades.txt", 'w') as file:
     #    file.write(parser.grenades.to_string())
@@ -113,6 +114,8 @@ def main():
 
     all_grenades = parser.grenades
 
+    print(all_grenades.columns)
+
     #print(bomb_status[0])
     #print(bomb_status[1])
     #print(bomb_status[2])
@@ -153,6 +156,11 @@ def main():
     #sprint(cv2.__file__)
 
     for round_num in range(len(parser.rounds)): #loops for every round played
+
+        current_round = round_num + 1
+        he_detonate_this_round = parser.events["hegrenade_detonate"].query('round == @current_round')
+
+        print(he_detonate_this_round)
 
         print("ROUND " + str(round_num+1))
 
@@ -396,14 +404,13 @@ def main():
 
             frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
 
-            #doesnt increase efficiency, fix later
-            #for i in range(min(all_grenades.index), max(all_grenades.index)):
-            #    if(all_grenades["tick"][i] < y+first_tick_of_round):
-            #        all_grenades.drop(i)
-            #    else:
-            #        break
+            for i in range(min(all_grenades.index), max(all_grenades.index)):
+                if(all_grenades["tick"][i] >= y+first_tick_of_round):
+                    all_grenades = all_grenades[i-min(all_grenades.index):]
+                    break
 
-            draw_nades(frame, all_grenades, y, first_tick_of_round)
+            #print(all_grenades.columns)
+            draw_nades(frame, all_grenades, y, first_tick_of_round, he_detonate_this_round)
 
             current_tick_weapons = all_weapons.query('tick == @y+@first_tick_of_round')
             weapon_list = current_tick_weapons["active_weapon_name"].to_list()
@@ -490,7 +497,6 @@ def main():
                 #if(players_equipped[z][-1] == "hkp2000"):
 
 
-                #TODO split equip list for each round, delete entry after usage
                 #for i in range(len(equip_list[0])):
                 #print(i)
                 #if(equip_list[0][i] == y and equip_list[1][i] == players[i].steam_id):
@@ -799,12 +805,22 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb, 
     cv2.putText(frame, f'{100*model_predict: .1f}', (192,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
     cv2.putText(frame, f'{100*(1-model_predict): .1f}', (730,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
 
-def draw_nades(frame, grenades, tick, first_tick_of_round):
+def draw_nades(frame, grenades, tick, first_tick_of_round, he_detonate_this_round):
     
-    for i in range(min(grenades.index),max(grenades.index)):
+    for i in range(min(he_detonate_this_round.index),max(he_detonate_this_round.index)):
 
         if(grenades["tick"][i] == tick+first_tick_of_round and str(grenades["X"][i]) != "<NA>" and str(grenades["Y"][i]) != "<NA>"):
-            overlay_image(frame, "weapons/"+grenades["grenade_type"][i]+".png", (round(translate_position(grenades["X"][i], "x")-4) ,round(translate_position(grenades["Y"][i], "y"))-9), 1, 0.5)
+            if(grenades["grenade_type"][i] == "he_grenade"):
+                for j in range(min(he_detonate_this_round.index), max(he_detonate_this_round.index)+1):
+                    print("j: ", j)
+                    if(grenades["entity_id"][i] == he_detonate_this_round["entityid"][j]):
+                        if(tick+first_tick_of_round < he_detonate_this_round["tick"][j]):
+                            overlay_image(frame, "weapons/he_grenade.png", (round(translate_position(grenades["X"][i], "x")-4) ,round(translate_position(grenades["Y"][i], "y"))-9), 1, 0.5)
+                        #print("test") #check if HE has exploded yet
+                        else:
+                            break
+            else:
+                overlay_image(frame, "weapons/"+grenades["grenade_type"][i]+".png", (round(translate_position(grenades["X"][i], "x")-4) ,round(translate_position(grenades["Y"][i], "y"))-9), 1, 0.5)
         elif(grenades["tick"][i] > tick+first_tick_of_round):
            break
 
