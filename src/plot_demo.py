@@ -6,6 +6,8 @@ import math
 from typing import Sequence
 import json
 import pandas as pd
+import torch
+from model import CS2LSTM
 #import sys
 
 #sys.path.append("/c/Users/notje/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/local-packages/Python311/site-packages/opencv_cuda/install_script.py")
@@ -22,6 +24,8 @@ DEMO_NAME = "replay.dem"
 OUTPUT_PATH = "../parsed_videos/"
 
 ASSETS_PATH = OUTPUT_PATH + "assets/"
+
+MODEL_PATH = "trained_model.pt"
 
 CT_COLOR = (247, 204, 29)
 T_COLOR = (36, 219, 253)
@@ -59,6 +63,20 @@ def main():
 
 
     parser = Demo(PATH + DEMO_NAME)
+
+    #model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=60 ,n_layers=2)
+    #model.load_state_dict(torch.load(MODEL_PATH, weights_only=False))
+    model = torch.load(MODEL_PATH, weights_only=False)
+    model.eval()
+
+    hidden = model.init_hidden(28) #initialize hidden variable
+    model.eval()
+
+    for param in model.parameters():
+        print(param)
+    #print(model.parameters)
+
+    #print(model)
 
     #print(parser.infernos)
     #print(parser.smokes.columns)
