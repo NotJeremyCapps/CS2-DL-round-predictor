@@ -25,8 +25,11 @@ class CS2LSTM(nn.Module):
         # Non-Categorical features for players + (Weapon encodings for all 10 players)
         self.n_feature = 146 + (10 *(self.prim_embed_dim + self.sec_embed_dim))
 
-        self.prim_weap_embedding = nn.Embedding(len(enums['Player']['primary_weapon']), self.prim_embed_dim) # 25 vocab size
-        self.sec_weap_embedding = nn.Embedding(len(enums['Player']['secondary_weapon']), self.sec_embed_dim) # 9 vocab size
+        # Add 2 to embedding vocab size: 
+        # https://discuss.pytorch.org/t/solved-assertion-srcindex-srcselectdimsize-failed-on-gpu-for-torch-cat/1804/13
+        
+        self.prim_weap_embedding = nn.Embedding(len(enums['Player']['primary_weapon'])+2, self.prim_embed_dim) # 25 vocab size
+        self.sec_weap_embedding = nn.Embedding(len(enums['Player']['secondary_weapon'])+2, self.sec_embed_dim) # 9 vocab size
 
 
         self.lstm = nn.LSTM(self.n_feature, self.n_hidden, self.n_layers, dropout=self.drop_prob, batch_first=True)
@@ -82,6 +85,9 @@ class CS2LSTM(nn.Module):
 
         # out.shape (batch, out_feature)
         out = self.fc(out[:, -1, :]) # last time step
+
+        with open("fc_out.txt", "a") as f:
+            f.write(f"{out}\n\n")
 
         output = torch.sigmoid(out)  # Convert to probabilities
 

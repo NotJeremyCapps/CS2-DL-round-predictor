@@ -20,23 +20,30 @@ def main():
 
     list_of_demo_names = [x for x in os.listdir(DEMO_PATH) if x.endswith(".dem")]
     print(list_of_demo_names)
+
+    with open("match_info.txt", "a") as f:
+        f.write(f"Total Demos: {len(list_of_demo_names)}\n\n\n")
+ 
+
+
     for demo_num in range(len(list_of_demo_names)):
 
         try:
 
             match_name = list_of_demo_names[demo_num]
-            # match_name = list_of_demo_names[7]
+
             
             # Ensure file exists before parsing
             if not os.path.exists(DEMO_PATH + match_name):
                 raise FileNotFoundError(f"Demo file {DEMO_PATH + match_name} not found!")
+                continue
 
             # Attempt to parse the demo
             # parser = Demo(DEMO_PATH + match_name)
 
-            try: 
-                parser = Demo(os.path.join(DEMO_PATH, match_name))
-    
+            # try: 
+            parser = Demo(os.path.join(DEMO_PATH, match_name))
+
 
 
             # parser = Demo(DEMO_PATH + list_of_demo_names[demo_numi])
@@ -44,22 +51,22 @@ def main():
             # with open("player_state_info.txt", "a") as f:
             #     f.write(str(parser.ticks[["player_state"]].sample(n=10)))
 
-                map_name = parser.header["map_name"]
-                print("Map: ", map_name)
+            map_name = parser.header["map_name"]
+            print("Map: ", map_name)
 
-                round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
-                round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
-            except BaseException as e:
-                print(f"Error occurred parsing {match_name}: {e}")
-                continue
+            round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
+            round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
+        
 
             # print("round   start_tick   end_tick")
             for round in range(len(parser.rounds)):
                 print(round+1, "      ", round_starts[round], "      ", round_ends[round])
 
             with open("match_info.txt", "a") as f:
-                f.write(f"Match: {match_name}\n")
+                f.write(f"Match {demo_num}: {match_name}\n")
                 f.write(str(parser.rounds) + "\n\n")
+
+            
 
                 
 
@@ -195,14 +202,11 @@ def main():
                     game[round_num-skip_counter].write_round_to_csv()
                 except Exception as e:
                     print(f"Couldnt load round, Error: {e}")
+                    continue
 
-
-        except FileNotFoundError as e:
-            print(f"Error: {e}")
-        # except PanicException as e:
-        #     print("Error parsing demo:", e)
-        except Exception as e:
-            print(f"Unexpected Error: {e}")
+        except BaseException as e:
+                print(f"Error occurred parsing {match_name}: {e}")
+                continue
 
 
 

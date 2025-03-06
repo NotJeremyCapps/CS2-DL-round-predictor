@@ -25,9 +25,9 @@ class ModelTrainer():
 
     def __init__(self):
 
-        self.total_epochs = 20 
+        self.total_epochs = 100 
 
-        self.batch_size = 28
+        self.batch_size = 128
 
         self.seq_len = 60
 
@@ -52,13 +52,13 @@ class ModelTrainer():
         self.lossFunc = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.split_dataset = True
+        self.split_dataset = False
 
         if self.split_dataset:
             split_dataset(0.8, os.path.join(DEMO_PATH, "preprocessed"))
 
-        self.trainset = CS2PredictionDataset(list=os.path.join(DEMO_PATH, "/preprocessed/rounds_train.txt"), sequence_length=self.seq_len)
-        self.testset = CS2PredictionDataset(list=os.path.join(DEMO_PATH, "/preprocessed/rounds_test.txt"), sequence_length=self.seq_len)
+        self.trainset = CS2PredictionDataset(list_path=os.path.join(DEMO_PATH, "preprocessed/rounds_train.txt"), sequence_length=self.seq_len)
+        self.testset = CS2PredictionDataset(list_path=os.path.join(DEMO_PATH, "preprocessed/rounds_test.txt"), sequence_length=self.seq_len)
 
         print(f"Trainset len : {len(self.trainset)}")
         print(f"Testset len : {len(self.testset)}")
@@ -77,8 +77,18 @@ class ModelTrainer():
                                      drop_last=True
                                      )
 
-        log_dir = 'logs/' + datetime.now().strftime('%B%d_%H_%M_%S')
-        self.writer = SummaryWriter(log_dir)
+        self.log_dir = os.path.join('logs', datetime.now().strftime('%B%d_%H_%M_%S'))
+
+        try:
+            os.mkdir(self.log_dir)
+            print(f"Log Directory '{self.log_dir}' created successfully.")
+        except FileExistsError:
+            print(f"Directory '{self.log_dir}' already exists.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        writer_pth = os.path.join(self.log_dir, "tb_logs")
+        self.writer = SummaryWriter(writer_pth)
 
     def log_scalars(self, global_tag, metric_dict, global_step):
 
@@ -93,6 +103,10 @@ class ModelTrainer():
         total = 0
         correct = 0
         num_preds = 0
+        running_acc = 0
+        running_loss = 0
+
+        plyr11_inst = 0
 
         # hidden = None
         with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
@@ -100,6 +114,10 @@ class ModelTrainer():
                 
                 # print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
                 if x_main_data.size(1) == 0: 
+                    continue
+                elif x_main_data.size(1) > 146: 
+                    plyr11_inst += 1
+                    print(f"Player 11 found. Num Instances: {plyr11_inst}")
                     continue
 
                 target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
@@ -117,34 +135,51 @@ class ModelTrainer():
                 num_preds += len(out)
 
                 loss = self.lossFunc(out, target.float())
-
+                nn.utils.clip_grad_norm_(self.model.parameters(), 5)
                 self.optimizer.zero_grad() #zeros grad from previous run
                 loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
                 self.optimizer.step()#changes weights and bias of parameters based on loss
 
+                # with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
+                #     f.write(f"Output:{out}\n\n")
+
                 # sets prediction depending on whether is above of below 0.5 thresh
-                binary_preds = (out > 0.5).float()  # Converts to 0 or 1
+                binary_preds = (out > 0.5).int()  # Converts to 0 or 1
+
+                # with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
+                #     f.write(f"Binary Targets:{target}\n")
+                #     f.write(f"Binary Preds:{binary_preds}\n\n")
+
 
                 # Compute accuracy
                 correct += (binary_preds == target).int().sum()
 
-                accuracy = (binary_preds == target).float().mean() * 100
+                accuracy = ((binary_preds == target).int().sum() / len(target)) * 100
+
+                running_acc += accuracy
+                running_loss += loss.item()
 
                 # if True in new_round:
                 #     hidden = self.model.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
                 # else: 
                 self.hidden = (self.hidden[0].detach(), self.hidden[1].detach()) # detach if maintaining to next batch
 
-                tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
-
                 total += self.batch_size # TODO: delete
 
-                metric_dict["loss"] = loss.item()
-                metric_dict["acc"] = accuracy
+                tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
 
-                self.log_scalars("train", metric_dict, batch_idx)
+                # metric_dict["batch_loss"] = 
+                # metric_dict["batch_acc"] = running_acc / total
 
-            print(f"Predictions total: {num_preds} guesses: {correct}/{total}")
+                # self.log_scalars("train", metric_dict, epoch)
+
+
+            metric_dict["loss"] = running_loss / len(self.train_loader)
+            metric_dict["acc"] = correct / (self.batch_size * len(self.train_loader))
+
+            self.log_scalars("train", metric_dict, epoch)
+
+            print(f"[TRAIN] [EPOCH {epoch}] - Predictions total: {num_preds} guesses: {correct}/{total} | {(correct/total) * 100}%")
         
 
 
@@ -159,6 +194,8 @@ class ModelTrainer():
         total = 0
         correct = 0
         num_preds = 0
+
+        running_loss = 0
 
         with torch.no_grad(): #stops gradient computation - it is unnecessary
             with tqdm(self.test_loader, unit="batch", leave=True) as tepoch:
@@ -184,34 +221,45 @@ class ModelTrainer():
 
                     loss = self.lossFunc(out, target.float())
 
+                    with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
+                        f.write(f"Output:{out}\n\n")
+
                     # self.optimizer.zero_grad() #zeros grad from previous run
                     # loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
                     # self.optimizer.step()#changes weights and bias of parameters based on loss
 
                     # sets prediction depending on whether is above of below 0.5 thresh
-                    binary_preds = (out > 0.5).float()  # Converts to 0 or 1
+                    binary_preds = (out > 0.5).int()  # Converts to 0 or 1
+
+                    with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
+                        f.write(f"Binary Targets:{target}\n")
+                        f.write(f"Binary Preds:{binary_preds}\n\n")
 
                     # Compute accuracy
                     correct += (binary_preds == target).int().sum()
 
                     accuracy = (binary_preds == target).float().mean()
 
+                    running_loss += loss.item()
+
                     # if True in new_round:
                     #     hidden = self.model.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
                     # else: 
                     self.hidden = (self.hidden[0].detach(), self.hidden[1].detach()) # detach if maintaining to next batch
 
-                    tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
-
                     total += self.batch_size # TODO: delete
 
+                    tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
 
-                    metric_dict["loss"] = loss.item()
-                    metric_dict["acc"] = accuracy
 
-                    self.log_scalars("train", metric_dict, batch_idx)
 
-                print(f"Predictions total: {num_preds} guesses: {correct}/{total}")
+                metric_dict["loss"] = running_loss / len(self.test_loader)
+                metric_dict["acc"] = correct / (self.batch_size * len(self.test_loader))
+
+                self.log_scalars("test", metric_dict, epoch)
+
+
+                print(f"[TEST] [EPOCH {epoch}] - Predictions total: {num_preds} guesses: {correct}/{total} | {(correct/total) * 100}%")
 
         # final_loss = loss/batches
         # print("Final Lost in Test:", final_loss)
@@ -222,6 +270,9 @@ class ModelTrainer():
         for epoch in range(self.total_epochs):
             self.train(epoch)
             self.test(epoch)
+
+            epoch_mdl_pth = os.path.join(self.log_dir, f"epoch_{epoch}.pt")
+            torch.save(self.model, epoch_mdl_pth)
 
 
 mt = ModelTrainer()
