@@ -8,9 +8,9 @@ import json
 import pandas as pd
 import torch
 from model import CS2LSTM
+from round import Round
 #import sys
 
-#sys.path.append("/c/Users/notje/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/local-packages/Python311/site-packages/opencv_cuda/install_script.py")
 import cv2
 import numpy as np
 import os
@@ -46,79 +46,37 @@ weapon_translate_file.close()
 
 def main():
 
-    # Example: Read frames from folder
-    #image_folder = '../parsed_videos/assets'
-    #images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
-    #for image in images:
-        #frame = cv2.imread(os.path.join(image_folder, image))
-        #cv2.circle(frame, (int(translate_position(-1656, "x")), int(translate_position(-1800, "y"))), 8, (0,0,255), -1)
-        #video_writer.write(frame)
-
-
-    #f = open("test.txt", "w")
-
-    #weapon_translate_file = open("weapon_translate.json", 'r')
-    #weapon_translate = json.loads(weapon_translate_file.read())
-    #weapon_translate_file.close()
-
-
     parser = Demo(PATH + DEMO_NAME)
+
+
 
     #model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=60 ,n_layers=2)
     #model.load_state_dict(torch.load(MODEL_PATH, weights_only=False))
     model = torch.load(MODEL_PATH, weights_only=False)
     model.eval()
 
-    hidden = model.init_hidden(28) #initialize hidden variable
+    hidden = model.init_hidden(1) #initialize hidden variable
     model.eval()
 
     for param in model.parameters():
         print(param)
-    #print(model.parameters)
 
-    #print(model)
-
-    #print(parser.infernos)
-    #print(parser.smokes.columns)
-    #print(parser.events["hegrenade_detonate"].columns)
-
-    #with open("nades.txt", 'w') as file:
-    #    file.write(parser.grenades.to_string())
-    #file.close()
-
-    #with open("nades2.txt", 'w') as file:
-    #    file.write(parser.parser.parse_grenades().to_string())
-    #file.close()
-    ##print(parser.grenades.columns)
-
-    #SOME DEMOS DO NOT HAVE WARMUP LEADING TO FIRST PISTOL ROUND NOT BEING PARSED!
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
     round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
+
+    current_round = Round(round_title="1", 
+                                round_num=1,
+                                map_name="de_mirage",
+                                demo_data_root=PATH, 
+                                enums_path="enums.json")
 
 
     all_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"])
 
     equipped_items_all = parser.parser.parse_event(event_name="item_equip")
-    #print(equipped_items_all.columns)
-    #equipped_ticks = equipped_items_all["tick"].tolist()
-    #equipped_steamid = equipped_items_all["user_steamid"].tolist()
-    #equipped_items = equipped_items_all["item"].tolist()
-#"is_bomb_dropped","inventory","inventory_as_ids"
 
-    #testing = parser.parser.parse_ticks(wanted_props=["inventory","is_bomb_dropped","is_bomb_planted","dropped_at_time"])
-    #print(testing.query('tick == 120')["tick"].head(1))
-    #print(testing.query('tick == 120')["is_bomb_dropped"].head(1))
-    #print(testing.query('tick == 120')["inventory"].head(10))#.columns)
-   #print(testing["dropped_at_time"].head(10))
-
-    #print(parser.parser.list_game_events())
-
-    #print(parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'"))
 
     defuser_pickups = parser.parser.parse_event(event_name="item_pickup").query("item == 'defuser'").sort_index(ignore_index=True)
-
-    #print(defuser_pickups)
-    #print("test")
 
     defuser_pickups_index = 0
 
@@ -134,44 +92,7 @@ def main():
 
     print(all_grenades.columns)
 
-    #print(bomb_status[0])
-    #print(bomb_status[1])
-    #print(bomb_status[2])
 
-    #print(round_starts)
-
-
-    #print(parser.parser.parse_event("dropped_at_time"))
-
-
-    #print(parser.parser.parse_item_drops())
-
-
-    #for i in range(len(equipped_items_all)):
-    #    print(equipped_items_all["item"][i], " ", equipped_items_all["weptype"][i])
-    #equipped_skins = equipped_items_all.columns
-    #print(equipped_items_all["defindex"])#.columns)
-    #for i in equipped_items_all["hassilencer"]:
-    #   print(i)
-    #equip_list = [equipped_ticks, equipped_steamid, equipped_items]
-
-    #equipped_items.values.tolist()
-
-    #event_df = parser.parser.parse_event(event_name="item_equip")
-
-    #for i in range(max(round_ends)):
-    #    print(parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[i]))
-
-    #players:list[Player] = []
-    #for i in range(0,10):
-    #    players.append(Player(name=f"player{i}", enums_path = "enums.json"))
-
-    #for z in range(0,10):
-    #    players[z].load_tick_data(start_idx_curr_tick, curr_tick_info, z)
-
-    #count = 0
-
-    #sprint(cv2.__file__)
 
     for round_num in range(len(parser.rounds)): #loops for every round played
 
@@ -198,27 +119,6 @@ def main():
 
         video_writer = cv2.VideoWriter(OUTPUT_PATH+"Round_" + str(round_num+1) + ".avi", FOURCC, FPS, FRAME_SIZE, True)
             
-        """steamid_list = []
-        for i in range(100):
-            repeat = False
-            for x in steamid_list:
-                if(parser.ticks.steamid.loc[i] == x):
-                    repeat = True
-                    break
-            if(repeat == False):
-                steamid_list.append(parser.ticks.steamid.loc[i])
-                print("steamid: ",parser.ticks.steamid.loc[i], " team: ", parser.ticks.team_name.loc[i])
-
-        print("num uni: ", len(steamid_list))
-        print("unique ids: ", steamid_list)"""
-
-        #for i in range(len(equip_list[0])):
-            #if(i==0):
-            #print("TICKLIST: ",equip_list[0][i], " first_tick_of_round: ", first_tick_of_round)
-            #print(type(first_tick_of_round))
-            #if(equip_list[0][i] == int(first_tick_of_round)):
-            #    print("MATCH")
-            #equip_first_index = 
 
         steamID_to_array = {}
         unique_ids = []
@@ -244,12 +144,7 @@ def main():
                     unique_player_names.append(parser.ticks.name.loc[y+start_tick_round_index])
                     steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
                     num_players += 1
-                #print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
-
-        #print("num uni: ", len(unique_player_ids))
-        #print("unique ids: ", unique_player_ids)
-
-        #print(steamID_to_array)
+                
         total_users = num_players + num_nonplayers
 
         players:list[Player] = []
@@ -464,155 +359,21 @@ def main():
                             players_equipped[z].append(weapon_translate[weapon_list[i]])
                         break
 
-                """update_found = 0
-                for i in range(len(equip_list[0])):
-                    #print(type(equip_list[0][i]), type(equip_list[1][i]), type(players[z].steam_id))
-                    #print(int(equip_list[1][i]), " ", players[z].steam_id)
+               
 
-                    #print(equip_list[0][i], " ", y)
-                    if((equip_list[0][i] == y+first_tick_of_round) and (equip_list[1][i] == players[z].steam_id)):
-                        if(equip_list[2][i] == "deagle" or equip_list[2][i] == "m4a1" or equip_list[2][i] == "hkp2000" or equip_list[2][i] == "mp7"):
-                            current_tick_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
-                            for i in range(len(current_tick_weapons)):
-                                if(str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
-                                    if(current_tick_weapons["active_weapon_name"][i] != None):
-                                        players_equipped[z].append(weapon_translate[current_tick_weapons["active_weapon_name"][i]])
-                                    else:
-                                        players_equipped[z].append(equip_list[2][i])
-                                    break
-                        else:
-                            players_equipped[z].append(equip_list[2][i])
-                        equip_list[0].pop(i)
-                        equip_list[1].pop(i)
-                        equip_list[2].pop(i)
-                        update_found = 1
-                        break
-                    
-                    if(equip_list[0][i] > y+first_tick_of_round):
-                        break
-
-                if(update_found == 0 and not (y == 0) ):
-                    players_equipped[z].append(players_equipped[z][-1])
-                elif(update_found == 0 and (y == 0)):
-                    current_tick_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"], ticks=[y+first_tick_of_round])
-                    current_weapon = None
-                    for i in range(len(current_tick_weapons)):
-                        #print(type(current_tick_weapons["steamid"][i]))
-                        #print(type(players[z].steam_id))
-
-                        #print(current_tick_weapons["steamid"])
-                        if(current_tick_weapons["active_weapon_name"][i] == None and str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
-                            break
-
-                        if(str(current_tick_weapons["steamid"][i]) == players[z].steam_id):
-                            current_weapon = weapon_translate[current_tick_weapons["active_weapon_name"][i]]
-                            break
-
-                    #print(current_tick_weapons["active_weapon_name"][i])
-
-                    if(current_weapon == None):
-                        current_weapon = "knife"
-
-
-                    #print(current_weapon)
-
-                    players_equipped[z].append(current_weapon)"""
-
-                #if(players_equipped[z][-1] == "hkp2000"):
-
-
-                #for i in range(len(equip_list[0])):
-                #print(i)
-                #if(equip_list[0][i] == y and equip_list[1][i] == players[i].steam_id):
-                #    players_equipped[z].append(equip_list[2][i])
-                #    break
-                #players_equiped[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].append()
 
                 draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser, current_bomb_holder==z, player_has_defuser[z][y])
-                #pos = (players[z].position[y][0],players[z].position[y][1],players[z].position[y][2])
-                #frame = cv2.imread(ASSETS_PATH+"de_mirage.png")
-                #cv2.circle(frame, (int(translate_position(pos[0], "x")), int(translate_position(pos[1], "y"))), 8, (0,0,255), -1)
+  
 
-
-            #for weap in tick_data.inventory.loc[tick_idx+z]:
-            #bomb_updated = False
-
-            #print("LEN: ", len(bomb_pickups[["tick"]]))
-            #print(bomb_pickups["tick"])
-            #print(bomb_pickups_index)
-
-
-
-            #print(bomb_pos)
-
-
-
-            #player_has_bomb = False
-            #for i in range(len(players)):
-            #    if(players[i].HasBomb[y]):
-            #        bomb_pos.append(players[i].position[y])
-            #        player_has_bomb = True
-            #        break
         
-            #if(not player_has_bomb):
-            #    if(y==0):
-            #        bomb_pos.append((1136.0, 32.0, -164.78845))
-            #    else:
-            #        bomb_pos.append(bomb_pos[-1])
-
-            #print(bomb_pos.append(bomb_pos[-1]))
 
             draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None, 0.6)
 
             video_writer.write(frame)
-                #print("TEAM: ", players[z].team_name)
-                #print("NUM: ", players[z].player_name)
-                #list_pos.append(pos)
-                #list_set.append({"size":6.0, "color": (29/255,204/255,247/255) if(players[z].team_name == "CT") else (253/255,219/255,36/255)})
-            #if(count%480==0):
-                #dict_list.append({"points":list_pos, "point_settings":list_set})
-                #f.write(str(players[z].position[y][0]) + str(players[z].position[y][1]) + str(players[z].position[y][2]) + "\n")
-            #count += 1
-        #fig, ax = plot.plot(map_name, list_pos)
+                
         video_writer.release()
 
-    #f.close()
     
-
-    #settings = {
-    #    "size" : 6.0
-    #}
-
-    #size = 6.0
-    #list_set = []
-    #list_set.append(settings)
-
-    #dict = {
-    #    "points" : list_pos,#list_pos[0:0],
-    #    "point_settings" : list_set#[{"size":6.0}]#list_set
-    #}
-
-    #list_dict = []
-    #list_dict.append(dict)
-    #print(parser.ticks)
-    #Tuple = (0,0,0)
-
-    #list = []
-
-
-    #list.append(Tuple)
-
-
-    #plot.gif(map_name=map_name, frames_data=dict_list, output_filename="game.gif", duration=4000)
-
-    #fig, ax = plot.plot(map_name, list_pos)
-
-    #ax.set_title("Simple Plot")
-
-    #ani = animation.FuncAnimation(fig=fig, func=update, frames=1, interval=16)
-    #plt.show()
-
-    #def update(frame):
 
 
 MIRAGE_DATA ={
@@ -670,23 +431,6 @@ def overlay_image(frame, image_path, coordinates, opacity, resize):
 
     #cv2.imwrite('combined.png', background)
 
-    """#blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
-    #if(type(image_path) == )
-    overlay = cv2.imread(ASSETS_PATH + image_path, cv2.IMREAD_UNCHANGED)
-    overlay = cv2.resize(overlay, (int(overlay.shape[1]*resize), int(overlay.shape[0]*resize)))
-    overlay_no_alpha = cv2.imread(ASSETS_PATH + image_path)
-    overlay_no_alpha = cv2.resize(overlay_no_alpha, (int(overlay_no_alpha.shape[1]*resize), int(overlay_no_alpha.shape[0]*resize)))
-
-    b, g, r, a = cv2.split(overlay)
-
-    for i in range(overlay.shape[0]):
-            for j in range(overlay.shape[1]):
-                #print(a[i][j])
-                if(a[i][j] > ALPHA_THRESH):
-                    #this is a mess
-                    frame[coordinates[1] + i, coordinates[0] + j] = (math.floor(overlay_no_alpha[i, j][0]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][0]*(1-(opacity*(a[i][j]/255)))), math.floor(overlay_no_alpha[i, j][1]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][1]*(1-(opacity*(a[i][j]/255)))), math.floor(overlay_no_alpha[i, j][2]*opacity*(a[i][j]/255) + frame[coordinates[1] + i, coordinates[0] + j][2]*(1-(opacity*(a[i][j]/255)))))
-
-    #cv2.addWeighted(frame, 1, blank_frame, opacity, 0.0, frame)"""
 
 #player is player object, tick is tick of round, frame is the frame to draw on
 def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demoparser2, hasBomb, hasDefuser):
@@ -722,43 +466,12 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         cv2.rectangle(frame, (pos_x-20, pos_y+13-math.ceil(player.health[tick]/4)), (pos_x-15, pos_y+13), (0,255,0), -1)
 
         held_item = player_equipped[tick]
-        #held_item = "knife"
-        #for i in range(len(equip_list[0])):
-           #print(i)
-        #    if(equip_list[0][i] == tick and equip_list[1][i]):
-        #        held_item = equip_list[2][i]
-        #        break       
+        
         
         if(held_item == "knife"):
             held_item = "knife_ct" if(player.team_name == "CT") else "knife_t"
-        #elif(held_item == "deagle" or held_item == "m4a1" or held_item == "hkp2000" or held_item == "mp7"):
-        #    current_tick_weapons = demoparser2.parse_ticks(wanted_props=["active_weapon_name"], ticks=[tick+first_tick_of_round])
-        #    for i in range(len(current_tick_weapons)):
-        #        if(str(current_tick_weapons["steamid"][i]) == player.steam_id):
-        #            held_item = weapon_translate[current_tick_weapons["active_weapon_name"][i]]
-        #            break
+       
 
-        #    print("deag")
-            #check for deag vs r8
-        #elif(held_item == "m4a1"):
-            #check for a4 vs a1s
-        #    print("m4")
-        #elif(held_item == "hkp2000"):
-        #    print("p2k")
-            #check for p2k vs usps
-        #elif(held_item == "mp7"):
-        #    print("mp7")
-            #check for mp7 vs mp5sd
-
-        #TODO some weapons are considered the same
-        #deag & r8
-        #a1 & a4
-        #p2k & usp
-        #mp7 & mp5sd
-
-        #print("HELD: ", held_item)
-        #print(type(equip_list[0]))
-        #print(player_equipped)
         try:
             overlay_image(frame, "weapons/"+held_item+".png", (pos_x+int(player_size*0.707), pos_y-int(player_size*0.707)-10), 1.0, 0.5)
         except:
@@ -771,30 +484,7 @@ def draw_player(player, tick, frame, player_equipped, first_tick_of_round, demop
         elif(hasBomb):
             overlay_image(frame, "bomb_icon.png", (pos_x+int(player_size*0.707)-5, pos_y+int(player_size*0.707)-5), 1.0, 0.6)
 
-        #if(player.HasBomb[tick] == 1):
-        #    overlay_image(frame)
-            
-            #blank_frame = np.zeros((FRAME_SIZE[0], FRAME_SIZE[1], 3), dtype=np.uint8)
-
-            #armor = cv2.imread(ASSETS_PATH + "head_armor.png", cv2.IMREAD_UNCHANGED)
-            #armor_no_alpha = cv2.imread(ASSETS_PATH + "head_armor.png")
-
-            #b, g, r, a = cv2.split(armor)
-
-            #print("ALPHA: ",type(a))
-
-            #for i in range(armor.shape[0]):
-            #    for j in range(armor.shape[1]):
-            #        if(a[i][j] > 0):
-            #            blank_frame[pos_y + i, pos_x + j] = armor_no_alpha[i, j]
-
-            #blank_frame = 
-            
-            #armor = cv2.resize(armor, FRAME_SIZE)
-            #cv2.addWeighted(frame, 1.0, blank_frame, 0.5, 0.0, frame)
-            
-
-            #frame = cv2.add(frame, armor)
+        
 
 def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb, model_predict):
     #print("plant time: ", plant_time)
@@ -828,6 +518,10 @@ def draw_round_details(frame, tick, bomb_position, plant_time, player_has_bomb, 
     overlay_image(frame, "T_icon.png", (822,45), 1, 1)
     cv2.putText(frame, f'{100*model_predict: .1f}', (192,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
     cv2.putText(frame, f'{100*(1-model_predict): .1f}', (730,130), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), 2, cv2.LINE_8)
+
+
+
+
 
 def draw_nades(frame, grenades, tick, first_tick_of_round, he_detonate_this_round, smokes_this_round, fires_this_round):
     
