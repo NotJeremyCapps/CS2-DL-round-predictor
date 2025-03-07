@@ -267,43 +267,6 @@ def main():
             #         f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
             curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+total_users-1] #get 1 dataframe per unique user
 
-            """steamID_to_array = {}
-            for i in range(len(curr_tick_info)):
-                #print(curr_tick_info.steamid.loc[i+start_idx_curr_tick])
-                steamID_to_array[curr_tick_info.steamid.loc[i+start_idx_curr_tick]] = i"""
-
-
-            if(curr_tick_info.empty):
-                for z in range(0, total_users):
-                    
-                    if(prev_curr_tick_info.team_name.loc[z+start_idx_curr_tick-(total_users)] != None):
-                        players[steamID_to_array[prev_curr_tick_info.steamid.loc[z+start_idx_curr_tick-total_users]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
-            else:
-                # Ten players in game
-                for z in range(0, total_users):
-                    #try:
-                    #    print("id: ", curr_tick_info.steamid.loc[z+start_idx_curr_tick], " num: ", steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
-                    #except:
-                    #    print(curr_tick_info.steamid.loc[z+start_idx_curr_tick])
-                    #    exit()
-                    if(curr_tick_info.team_name.loc[z+start_idx_curr_tick] != None):
-                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].load_tick_data(start_idx_curr_tick, curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
-                        #print(parser.parser.parse_player_info())
-                        #player = [str(76561198799340122)]#[unique_player_ids[1]]#unique_player_ids[0]user_steamid
-                        #parser.parser.parse_event(event_name="item_equip")#, player=player))#,player=[unique_player_names[0]]))#, players=unique_player_ids[0]))#,unique_player_ids[0],0)["item"])#.columns)#, ticks=[0,1000])) gets held weapon
-                        #tick and item
-                        prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
-                    #print(z, "TEST ", round_num)
-
-
-            for z in range(0, num_players):
-                if(math.isnan(players[z].position[y][0]) or math.isnan(players[z].position[y][1])):
-                    if(y!=0):
-                        players[z].position[y] = players[z].position[y-1]
-                    else:
-                        players[z].position[y] = (0,0,0)
-                    #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
-
 
             defuser_updated = False
 
@@ -320,6 +283,7 @@ def main():
                     break
 
             for i in range(num_players):
+                prev_defuser = False
                 while(len(player_has_defuser[i]) <= y):
                     if(len(player_has_defuser[i]) == 0):
                         for j in range(len(has_defuser_at_end)):
@@ -458,10 +422,10 @@ def main():
 
             video_writer.write(frame)
 
-            has_defuser_at_end = []
-            for i in range(len(num_players)):
-                if(player_has_defuser[i][-1] == True):
-                    has_defuser_at_end.append(players[i].steam_id)
+        has_defuser_at_end = []
+        for i in range(0, num_players):
+            if(player_has_defuser[i][-1] == True):
+                has_defuser_at_end.append(players[i].steam_id)
                 
         video_writer.release()
 
