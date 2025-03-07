@@ -19,7 +19,7 @@ import os
 PATH = "../game_demos/"
 #g2-vs-heroic-m3-mirage.dem
 #00nation-vs-eclot-m1-mirage.dem
-DEMO_NAME = "replay.dem"
+DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"#"replay.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -58,17 +58,12 @@ def main():
     hidden = model.init_hidden(1) #initialize hidden variable
     model.eval()
 
-    for param in model.parameters():
-        print(param)
+    #for param in model.parameters():
+    #    print(param)
 
     round_starts = (parser.rounds["freeze_end"]) #this is the ticks for end of freeze time at start of rounds
     round_ends = (parser.rounds["end"]) #does not include time between round determination and respawn
 
-    current_round = Round(round_title="1", 
-                                round_num=1,
-                                map_name="de_mirage",
-                                demo_data_root=PATH, 
-                                enums_path="enums.json")
 
 
     all_weapons = parser.parser.parse_ticks(wanted_props=["active_weapon_name"])
@@ -90,11 +85,18 @@ def main():
 
     all_grenades = parser.grenades
 
-    print(all_grenades.columns)
+    #print(all_grenades.columns)
 
+    has_defuser_at_end = []
 
 
     for round_num in range(len(parser.rounds)): #loops for every round played
+
+        #if(round_num == 0):
+        #    round_num = 12
+
+        #print("ROUND: ", round_num)
+
 
         current_round = round_num + 1
         he_detonate_this_round = parser.events["hegrenade_detonate"].query('round == @current_round')
@@ -102,16 +104,16 @@ def main():
         smokes_this_round = parser.smokes.query('round == @current_round')
         fires_this_round = parser.infernos.query('round == @current_round')
 
-        print(smokes_this_round)
-        print(fires_this_round)
+        #print(smokes_this_round)
+        #print(fires_this_round)
 
         #print(min(he_detonate_this_round.index), max(he_detonate_this_round.index))
 
-        print("ROUND " + str(round_num+1))
+        #print("ROUND " + str(round_num+1))
 
         first_tick_of_round = int(round_starts[round_num])
         start_tick_round_index = parser.ticks.query('tick == @first_tick_of_round').head(1).index[0] #query takes a long time and dont want to do it for every tick, index of data frame from index of tick 
-        print("FIRST TICK: ", first_tick_of_round)
+        #print("FIRST TICK: ", first_tick_of_round)
             
         #players:list[Player] = []
         #for i in range(0,10):
@@ -136,6 +138,7 @@ def main():
             if(repeat == False):
                 
                 unique_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
+                #print(parser.ticks.team_name.loc[y+start_tick_round_index+256])
                 if(parser.ticks.team_name.loc[y+start_tick_round_index] == None):
                     unique_nonplayer_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
                     num_nonplayers += 1
@@ -169,6 +172,79 @@ def main():
             player_equip_tick.append(players_equip_time[i]["tick"].tolist())
             #equipped_items_all.query("tick <= end_of_round")
 
+
+
+
+
+
+        round_file = Round(round_title="data_for_visualizer", 
+                                round_num=round_num,
+                                map_name="vizualizer",
+                                demo_data_root=PATH, 
+                                enums_path="enums.json")
+        round_file.init_headers()
+
+
+
+
+
+
+
+        for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))): #loops for every tick in that round
+
+
+            start_idx_curr_tick = start_tick_round_index+(y*total_users)
+
+            # if y % 10 == 0:
+            #     with open("tick_info.txt", "a") as f:
+            #         f.write(str(parser.ticks.head(n=start_idx_curr_tick+10)))
+
+
+
+
+            curr_tick_info = parser.ticks.loc[start_idx_curr_tick : start_idx_curr_tick+total_users-1] #get 1 dataframe per unique user
+
+
+            if(curr_tick_info.empty):
+                for z in range(0, total_users):
+                    
+                    if(prev_curr_tick_info.team_name.loc[z+start_idx_curr_tick-(total_users)] != None):
+                        players[steamID_to_array[prev_curr_tick_info.steamid.loc[z+start_idx_curr_tick-total_users]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
+            else:
+
+                for z in range(0, total_users):
+               
+                    if(curr_tick_info.team_name.loc[z+start_idx_curr_tick] != None):
+                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]]].load_tick_data(start_idx_curr_tick, curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick]])
+            
+                        prev_start_idx_curr_tick, prev_curr_tick_info= start_idx_curr_tick, curr_tick_info
+                    #print(z, "TEST ", round_num)
+
+
+            for z in range(0, num_players):
+                if(math.isnan(players[z].position[y][0]) or math.isnan(players[z].position[y][1])):
+                    if(y!=0):
+                        players[z].position[y] = players[z].position[y-1]
+                    else:
+                        players[z].position[y] = (0,0,0)
+                    #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
+
+
+        round_file.load_player_tick_data(players = players)
+        round_file.load_round_data(round_dict=parser.rounds)
+        round_file.write_round_to_csv()
+
+
+
+
+
+
+
+
+
+
+
+
         round_dict = parser.rounds
 
         bomb_plant_time = None
@@ -200,8 +276,8 @@ def main():
             if(curr_tick_info.empty):
                 for z in range(0, total_users):
                     
-                    if(prev_curr_tick_info.team_name.loc[z+start_idx_curr_tick-(y*(total_users))] != None):
-                        players[steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-total_users]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
+                    if(prev_curr_tick_info.team_name.loc[z+start_idx_curr_tick-(total_users)] != None):
+                        players[steamID_to_array[prev_curr_tick_info.steamid.loc[z+start_idx_curr_tick-total_users]]].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)#steamID_to_array[curr_tick_info.steamid.loc[z+start_idx_curr_tick-(y*(total_users))]])
             else:
                 # Ten players in game
                 for z in range(0, total_users):
@@ -233,6 +309,8 @@ def main():
 
             for i in range(len(defuser_pickups["tick"])):
                 if(defuser_pickups["tick"][i+defuser_pickups_index] <= y+first_tick_of_round):
+                    #print(unique_ids)
+                    #print(steamID_to_array)
                     player_has_defuser[steamID_to_array[defuser_pickups["user_steamid"][i+defuser_pickups_index]]].append(True)
                     defuser_updated = True
                 else:
@@ -244,7 +322,16 @@ def main():
             for i in range(num_players):
                 while(len(player_has_defuser[i]) <= y):
                     if(len(player_has_defuser[i]) == 0):
-                        player_has_defuser[i].append(False)
+                        for j in range(len(has_defuser_at_end)):
+                            prev_defuser = False
+                            if(has_defuser_at_end[j] == players[i].steam_id and players[i].team_name == "CT"):
+                                player_has_defuser[i].append(True)
+                                prev_defuser = True
+                                break
+                        
+                        if(prev_defuser == False):
+                            player_has_defuser[i].append(False)
+
                     elif(players[z].health == 0):
                         player_has_defuser[i].append(False)
                     else:
@@ -370,6 +457,11 @@ def main():
             draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None, 0.6)
 
             video_writer.write(frame)
+
+            has_defuser_at_end = []
+            for i in range(len(num_players)):
+                if(player_has_defuser[i][-1] == True):
+                    has_defuser_at_end.append(players[i].steam_id)
                 
         video_writer.release()
 
