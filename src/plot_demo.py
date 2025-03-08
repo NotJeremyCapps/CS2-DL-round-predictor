@@ -10,11 +10,16 @@ import torch
 from model import CS2LSTM
 from round import Round
 #import sys
-
+import csv
 import cv2
 import numpy as np
 import os
+from dataset import CS2PredictionDataset
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 # CPU only, would be nice to have a GPU version
+
+ROUNDS_PATH = "../game_demos/visualizer"
 
 PATH = "../game_demos/"
 #g2-vs-heroic-m3-mirage.dem
@@ -38,6 +43,8 @@ FRAME_SIZE = (1024, 1024)
 
 FPS = 64
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 FOURCC = cv2.VideoWriter_fourcc(*'XVID')
 
 weapon_translate_file = open("weapon_translate.json", 'r')
@@ -55,8 +62,8 @@ def main():
     model = torch.load(MODEL_PATH, weights_only=False)
     model.eval()
 
-    hidden = model.init_hidden(1) #initialize hidden variable
-    model.eval()
+    #hidden = model.init_hidden(1) #initialize hidden variable
+    #model.eval()
 
     #for param in model.parameters():
     #    print(param)
@@ -179,8 +186,8 @@ def main():
 
         round_file = Round(round_title="data_for_visualizer", 
                                 round_num=round_num,
-                                map_name="vizualizer",
-                                demo_data_root=PATH, 
+                                map_name="visualizer",
+                                demo_data_root=ROUNDS_PATH, 
                                 enums_path="enums.json")
         round_file.init_headers()
 
@@ -230,6 +237,8 @@ def main():
                     #players[z].load_tick_data(prev_start_idx_curr_tick, prev_curr_tick_info, z)
 
 
+        if(os.path.exists("../game_demos/visualizer/preprocessed/rounds.txt")):
+            os.remove("../game_demos/visualizer/preprocessed/rounds.txt")
         round_file.load_player_tick_data(players = players)
         round_file.load_round_data(round_dict=parser.rounds)
         round_file.write_round_to_csv()
@@ -237,6 +246,107 @@ def main():
 
 
 
+
+        round_set = CS2PredictionDataset(list="../game_demos/visualizer/preprocessed/rounds.txt", sequence_length=120)
+
+
+        test_data = DataLoader(dataset=round_set,
+                                     batch_size=1,
+                                     num_workers=0,
+                                     drop_last=False
+                                     )
+        
+
+
+
+
+        out_array = []
+
+
+        hidden = model.init_hidden(1)
+        with torch.no_grad(): #stops gradient computation - it is unnecessary
+            with tqdm(test_data, unit="batch", leave=True) as tepoch:
+                for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
+
+                    print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
+                    if x_main_data.size(1) == 0: 
+                        continue
+                    
+                    target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(DEVICE), new_round.to(DEVICE), x_main_data.to(DEVICE), x_prim_weap.int().to(DEVICE), x_sec_weap.int().to(DEVICE)
+
+                    # need categorical data as ints for embedding
+                    x_prim_weap, x_sec_weap = x_prim_weap.int(), x_sec_weap.int()
+                    # with open('batch_data.txt', 'a') as f:
+                    #     print(f"Target: {target}, Shape: {target.size()};\n Main_data: {x_main_data}, Shape: {x_main_data.size()};\n Weapon_data: {x_prim_weap}, Shape: {x_prim_weap.size()};\n New_Round: {new_round}, Shape: {new_round.shape};\n\n\n", file = f)
+            
+
+                    out, hidden = model(x_main_data, x_prim_weap, x_sec_weap, hidden) #hidden is info from past
+
+                    out_array.append(out.squeeze().item()) # Output comes out of self.model (batch_size, 1) for some reason
+
+
+
+        #print("OUT LEN: ",len(out_array))
+
+
+        #with open("../game_demos/visualizer/preprocessed/visualzer/data_for_visualizer.csv", 'r') as file: #open first csv file as file2 -- need to indicate based on order of csv file
+        #        readingcsv = csv.reader(file)
+        #        all_data = []
+        #        for row in readingcsv: 
+        #            all_data.append(row) #first index is row and then col
+
+
+        #data_weap_ind = 0
+        #for index, word in enumerate(self.all_data[0]):
+        #    if "primary" in word:
+        #        data_weap_ind = index
+        #        break
+        #    elif "secondary" in word:
+        #        data_weap_ind = index
+        #        break
+
+    
+        #create non prim/second data into floats
+        #int_data = []
+    
+        #for i in range(1, len(self.all_data)):#increment over every row
+        #    temp_array = []
+        #    for m in range(data_weap_ind): #up to prim/secondary data -THIS 96 IS INCORRECT SHOULD PROB automate
+                    #convert to float
+        #            temp_array.append(float(self.all_data[i][m])) 
+                   
+
+
+
+
+        #int_data.append(temp_array)
+            
+        #change into tensor
+        #data = torch.tensor(int_data) #data index 
+        #create prim/secondary weapon data as floats
+        #prim_data_weap = []
+        #sec_data_weap = []
+    
+        #for i in range(1, len(all_data)):#increment over every row
+        #    prim_array = []
+        #    sec_array = []
+        #    for m in range(data_weap_ind,len(all_data[0])-1): #from prim/secondary data to win 
+                    #convert to float
+        #            if(0 == (m-data_weap_ind)%2 ):
+         #               prim_array.append(float(all_data[i][m])) 
+        #            elif(1 == (m-data_weap_ind)%2):
+        #                sec_array.append(float(all_data[i][m]))
+                   
+        #    prim_data_weap.append(prim_array)
+        #    sec_data_weap.append(sec_array)
+        
+        # with open('batch_data.txt', 'a') as f:
+        #     print(f"Loading tensors!! All Data: {self.all_data}, Shape: {len(self.all_data)};\n\n\n", file = f)
+            
+        #change into tensor
+        #prim_data_weap_t = torch.tensor(prim_data_weap) #data index 
+        #sec_data_weap_t = torch.tensor(sec_data_weap) #data index 
+      
 
 
 
@@ -416,9 +526,11 @@ def main():
                 draw_player(players[z], y, frame, players_equipped[z], first_tick_of_round, parser.parser, current_bomb_holder==z, player_has_defuser[z][y])
   
 
-        
+            val_to_show = int((y-120)/120)
+            if(val_to_show < 0):
+                val_to_show = 0
 
-            draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None, 0.6)
+            draw_round_details(frame, y, bomb_pos, bomb_plant_time, current_bomb_holder != None, 1-out_array[val_to_show])
 
             video_writer.write(frame)
 
