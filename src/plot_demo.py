@@ -24,7 +24,7 @@ ROUNDS_PATH = "../game_demos/visualizer"
 PATH = "../game_demos/"
 #g2-vs-heroic-m3-mirage.dem
 #00nation-vs-eclot-m1-mirage.dem
-DEMO_NAME = "g2-vs-heroic-m3-mirage.dem"#"replay.dem"
+DEMO_NAME = "heroic-vs-nemiga-m2-mirage.dem"#"g2-vs-heroic-m3-mirage.dem"#"replay.dem"
 
 OUTPUT_PATH = "../parsed_videos/"
 
@@ -136,6 +136,8 @@ def main():
         unique_nonplayer_ids = []
         num_players = 0
         num_nonplayers = 0
+        CT_counter = 0
+        T_counter = 5
         for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))):
             repeat = False
             for player in unique_ids:
@@ -152,7 +154,12 @@ def main():
                 else:
                     unique_player_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
                     unique_player_names.append(parser.ticks.name.loc[y+start_tick_round_index])
-                    steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
+                    if(parser.ticks.team_name.loc[y+start_tick_round_index] == "CT"):
+                        steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = CT_counter
+                        CT_counter += 1
+                    elif(parser.ticks.team_name.loc[y+start_tick_round_index] == "TERRORIST"):
+                        steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = T_counter
+                        T_counter += 1
                     num_players += 1
                 
         total_users = num_players + num_nonplayers
@@ -169,14 +176,33 @@ def main():
         players_equip_time = []
         player_equip_weapon = []
         player_equip_tick = []
+        CT_track = 0
         for i in range(0,num_players):
-            players.append(Player(name=f"player{i}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
-            players_equipped.append([])
-            player_has_defuser.append([])
-            current_steamid = unique_player_ids[i]
-            players_equip_time.append(equips_this_round.query("user_steamid == @current_steamid"))
-            player_equip_weapon.append(players_equip_time[i]["item"].tolist())
-            player_equip_tick.append(players_equip_time[i]["tick"].tolist())
+            #print(parser.ticks.team_name.loc[i+start_tick_round_index])
+            if(parser.ticks.team_name.loc[i+start_tick_round_index] == "CT"):
+                players.append(Player(name=f"player{CT_track}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
+                players_equipped.append([])
+                player_has_defuser.append([])
+                current_steamid = unique_player_ids[i]
+                players_equip_time.append(equips_this_round.query("user_steamid == @current_steamid"))
+                player_equip_weapon.append(players_equip_time[CT_track]["item"].tolist())
+                player_equip_tick.append(players_equip_time[CT_track]["tick"].tolist())
+                CT_track += 1
+
+
+        T_track = 5
+        for i in range(0,num_players):
+            #print(parser.ticks.team_name.loc[i+start_tick_round_index])
+            if(parser.ticks.team_name.loc[i+start_tick_round_index] == "TERRORIST"):
+                players.append(Player(name=f"player{T_track}", enums_path = "enums.json", steam_id=unique_player_ids[i]))
+                players_equipped.append([])
+                player_has_defuser.append([])
+                current_steamid = unique_player_ids[i]
+                players_equip_time.append(equips_this_round.query("user_steamid == @current_steamid"))
+                player_equip_weapon.append(players_equip_time[T_track]["item"].tolist())
+                player_equip_tick.append(players_equip_time[T_track]["tick"].tolist())
+                T_track += 1
+
             #equipped_items_all.query("tick <= end_of_round")
 
 
@@ -239,6 +265,10 @@ def main():
 
         if(os.path.exists("../game_demos/visualizer/preprocessed/rounds.txt")):
             os.remove("../game_demos/visualizer/preprocessed/rounds.txt")
+
+        if(os.path.exists("../game_demos/visualizer/preprocessed/visualizer/data_for_visualizer.csv")):
+            os.remove("../game_demos/visualizer/preprocessed/visualizer/data_for_visualizer.csv")
+            
         round_file.load_player_tick_data(players = players)
         round_file.load_round_data(round_dict=parser.rounds)
         round_file.write_round_to_csv()

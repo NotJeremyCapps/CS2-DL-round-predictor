@@ -37,7 +37,7 @@ class Round:
         #self.round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
         #self.round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")
 
-        emun_file = open("enums.json", 'r')
+        emun_file = open(enums_path, 'r')
         self.enums = json.loads(emun_file.read())
 
         self.input_params_num = 0
@@ -61,7 +61,9 @@ class Round:
 
         # CT Win = 0
         # T Win = 1
-        if round_dict['winner'][self.round_num] == "CT":
+
+        # In demo 3 means CT, 2 means T
+        if round_dict['winner'][self.round_num] == "CT" or str(round_dict['winner'][self.round_num]) == "3":
             round_info_dict['winner'] = [0]
         else:
             round_info_dict['winner'] = [1]
@@ -99,7 +101,7 @@ class Round:
                     self.bomb_postion.append((self.other_dfs['coord_df'][f"{player.player_name}_x"][tick], self.other_dfs['coord_df'][f"{player.player_name}_y"][tick], self.other_dfs['coord_df'][f"{player.player_name}_z"][tick]))
                     
             if(len(self.bomb_postion) == 0):
-                self.bomb_postion.append((1136.0, 32.0, -164.78845)) #a position i found in a round where the bomb started, prob somewhere in T spawn
+                self.bomb_postion.append((-264.0, -1560.0, -11.96875)) #a position i found in a round where the bomb started, prob somewhere in T spawn
             elif(len(self.bomb_postion) == tick):
                 self.bomb_postion.append(self.bomb_postion[-1])
 

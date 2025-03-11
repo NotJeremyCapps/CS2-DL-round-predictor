@@ -22,7 +22,7 @@ class ModelTrainer():
 
     def __init__(self):
 
-        self.total_epochs = 20 
+        self.total_epochs = 1
 
         self.batch_size = 28
 
@@ -92,6 +92,15 @@ class ModelTrainer():
                 print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
                 if x_main_data.size(1) == 0: 
                     continue
+                
+                #torch.set_printoptions(threshold=torch.inf)
+                #print(f"main: {x_main_data}")
+                #torch.set_printoptions(threshold=torch.inf)
+                #print(f"prim: {x_prim_weap}")
+                #torch.set_printoptions(threshold=torch.inf)
+                #print(f"sec: {x_sec_weap}")
+                #torch.set_printoptions(threshold=torch.inf)
+                #print(f"hidden: {hidden}")
 
                 target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
 
@@ -156,11 +165,11 @@ class ModelTrainer():
         with torch.no_grad(): #stops gradient computation - it is unnecessary
             with tqdm(self.train_loader, unit="batch", leave=True) as tepoch:
                 for batch_idx, (target, new_round, x_main_data, x_prim_weap, x_sec_weap) in enumerate(tepoch):
-                    
+
                     print(f"Len of main: {x_main_data.size(1)}") # get length of sequence dimension
                     if x_main_data.size(1) == 0: 
                         continue
-
+                    
                     target, new_round, x_main_data, x_prim_weap, x_sec_weap = target.to(self.device), new_round.to(self.device), x_main_data.to(self.device), x_prim_weap.int().to(self.device), x_sec_weap.int().to(self.device)
 
                     # need categorical data as ints for embedding
