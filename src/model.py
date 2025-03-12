@@ -2,6 +2,7 @@ import torch
 import json
 import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
+import torch.nn.functional as F
 
 ENUMS_PATH = "enums.json"
 
@@ -11,11 +12,11 @@ enums = json.loads(emun_file.read())
 
 class CS2LSTM(nn.Module):
 
-    def __init__(self, n_feature=None, out_feature=1, n_hidden=256, n_layers=2, drop_prob=0.5):
+    def __init__(self, n_feature=None, out_feature=1, n_hidden=256, n_layers=3, drop_prob=0.5):
         super().__init__()
         self.drop_prob = drop_prob
         self.n_layers = n_layers
-        self.n_hidden = n_hidden
+        self.n_hidden = n_hidden 
         self.n_feature = n_feature
 
         self.prim_embed_dim = 9
@@ -37,8 +38,12 @@ class CS2LSTM(nn.Module):
         # self.layer_norm = nn.LayerNorm()
 
         self.dropout = nn.Dropout(drop_prob)
+        # self.dropout3 = nn.Dropout(drop_prob)
 
-        self.fc = nn.Linear(n_hidden, out_feature)
+        self.fc = nn.Linear(n_hidden, n_hidden)
+        self.relu = nn.ReLU()
+        self.dropout2 = nn.Dropout(drop_prob)
+        self.fc2 = nn.Linear(n_hidden, out_feature)
 
     def forward(self, x_main_data, x_prim_weap, x_sec_weap, hidden):
 
@@ -49,6 +54,9 @@ class CS2LSTM(nn.Module):
         # Pass through embedding layer
         prim_weap_embed = self.prim_weap_embedding(x_prim_weap) 
         sec_weap_embed = self.sec_weap_embedding(x_sec_weap) 
+
+        # prim_weap_embed = self.dropout1(prim_weap_embed)
+        # sec_weap_embed = self.dropout2(prim_weap_embed)
 
         combined_embeds = torch.cat([prim_weap_embed, sec_weap_embed], dim=-1)  
 
@@ -84,12 +92,21 @@ class CS2LSTM(nn.Module):
         #     f.write(f"Dropout out: {out}, Shape: {out.shape}")
 
         # out.shape (batch, out_feature)
-        out = self.fc(out[:, -1, :]) # last time step
+        output = self.fc(out[:, -1, :]) # last time step
 
-        with open("fc_out.txt", "a") as f:
-            f.write(f"{out}\n\n")
+        output = self.relu(output)
 
-        output = torch.sigmoid(out)  # Convert to probabilities
+        output = self.dropout2(output)
+
+        output = self.fc2(output)
+
+        # with open("fc_out.txt", "a") as f:
+        #     f.write(f"{out}\n\n")
+
+        # No sigmoid on output when using BCELogigitLoss : 
+        # https://stackoverflow.com/questions/75979632/pytorchs-nn-bcewithlogitsloss-behaves-totaly-differently-than-nn-bceloss
+        
+        # output = torch.sigmoid(out)  # Convert to probabilities
 
         # return the final output and the hidden state
         return output, l_hidden

@@ -130,6 +130,8 @@ def main():
                 unique_nonplayer_ids = []
                 num_players = 0
                 num_nonplayers = 0
+                CT_counter = 0
+                T_counter = 5
                 for y in range(len(range(round_starts[round_num], round_ends[round_num] + 1))):
                     repeat = False
                     for player in unique_ids:
@@ -144,7 +146,12 @@ def main():
                             num_nonplayers += 1
                         else:
                             unique_player_ids.append(parser.ticks.steamid.loc[y+start_tick_round_index])
-                            steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = num_players
+                            if(parser.ticks.team_name.loc[y+start_tick_round_index] == "CT"):
+                                steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = CT_counter
+                                CT_counter += 1
+                            elif(parser.ticks.team_name.loc[y+start_tick_round_index] == "TERRORIST"):
+                                steamID_to_array[parser.ticks.steamid.loc[y+start_tick_round_index]] = T_counter
+                                T_counter += 1
                             num_players += 1
                         #print("steamid: ",parser.ticks.steamid.loc[y+start_tick_round_index], " team: ", parser.ticks.team_name.loc[y+start_tick_round_index])
 
@@ -156,8 +163,19 @@ def main():
             
                 
                 players:list[Player] = []
+
+                CT_track = 0
                 for ply_n in range(0,num_players):
-                    players.append(Player(name=f"player{ply_n}", enums_path = ENUMS_PATH))
+                    if(parser.ticks.team_name.loc[ply_n+start_tick_round_index] == "CT"):
+                        players.append(Player(name=f"player{CT_track}", enums_path = ENUMS_PATH))
+                        CT_track += 1
+
+
+                T_track = 5
+                for ply_n in range(0,num_players):
+                    if(parser.ticks.team_name.loc[ply_n+start_tick_round_index] == "TERRORIST"):
+                        players.append(Player(name=f"player{T_track}", enums_path = ENUMS_PATH))
+                        T_track += 1
                 
                 # init headers for each player in round dataframe
                 #print(round_num)

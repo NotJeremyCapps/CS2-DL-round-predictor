@@ -28,11 +28,11 @@ class Round:
         self.df = pd.DataFrame()
         self.other_dfs = {}
 
-        self.preprocessed_dir_pth = os.path.join(demo_data_root, "preprocessed", map_name)
+        self.preprocessed_dir_pth = os.path.join(demo_data_root, "preprocessed_new", map_name)
         os.makedirs(self.preprocessed_dir_pth, exist_ok=True)
 
         self.csv_file = os.path.join(self.preprocessed_dir_pth, f"{self.round_title}.csv")
-        self.round_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds.txt")
+        self.round_txt_file = os.path.join(demo_data_root, "preprocessed_new", f"rounds.txt")
 
         #self.round_train_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_train.txt")
         #self.round_test_txt_file = os.path.join(demo_data_root, "preprocessed", f"rounds_test.txt")

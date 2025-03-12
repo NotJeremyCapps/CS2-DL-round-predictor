@@ -31,6 +31,8 @@ class CS2PredictionDataset(Dataset):
 
         #self.load_tensors()
         self.calc_len()
+        self.curr_match = 0
+        self.is_last_round = False
 
     def calc_len(self):
         csv_count = 0
@@ -68,6 +70,23 @@ class CS2PredictionDataset(Dataset):
                     self.all_data = []
                     for row in readingcsv: 
                         self.all_data.append(row) #first index is row and then col
+                    
+                    
+                    try:
+                        next_game_num = int(words[self.csvfile +1].split("de_mirage_")[1].split("_round")[0]) # Get name of next round csv
+
+                        if self.is_last_round == True:
+                            self.curr_match = next_game_num
+                            self.is_last_round = False
+                        elif next_game_num != self.curr_match:
+                            self.is_last_round = True
+
+
+                        
+                    except Exception as e: 
+                        # print(f"Most likely due to de_mirage not being map used, Error: {e}")
+                        pass
+                    
 
 
                 ###can remove this if clean up works
@@ -76,8 +95,8 @@ class CS2PredictionDataset(Dataset):
 
                         print(f"Player 11 found. Num Instances: {self.plyr_11_skips}, Row Len: {len(self.all_data[0])}")
 
-                        with open(f"getitem_maindata.txt", "a") as f: 
-                            f.write(f"[SKIPPED] - {len(self.all_data[0])} from file: {words[self.csvfile]}\n\n")
+                        # with open(f"getitem_maindata.txt", "a") as f: 
+                        #     f.write(f"[SKIPPED] - {len(self.all_data[0])} from file: {words[self.csvfile]}\n\n")
 
                         self.plyr_11_skips += 1
                         self.csvfile += 1 # Go to next csvfile
@@ -181,10 +200,12 @@ class CS2PredictionDataset(Dataset):
         len_of_round = len(self.data)
 
         excess= self.sequence_length - (len_of_round%self.sequence_length) # not 0 based
+        is_last_seq = False
         if self.new_round == 2: #check for padding if in a new round
             self.new_round -= 1  #decrement to indicate next round is not a new round but current one is 
             self.starting_index_of_round = prov_index
             if excess!= self.sequence_length:
+                is_last_seq = True
                 x_main_data = P.pad(self.data,(0,0,excess,0), value=0) # Left padding
                 x_prim_data_weap = P.pad(self.prim_data_weap_t,(0,0,excess,0), value=0) 
                 x_sec_data_weap = P.pad(self.sec_data_weap_t,(0,0,excess,0), value=0)
@@ -231,16 +252,16 @@ class CS2PredictionDataset(Dataset):
         #create tensor for new round
         #self.new_round= torch.full((self.sequence_length,), (float(self.new_round)))
 
-        if(self.new_round == 2):
-            new_round_output = 0
+        if self.is_last_round and is_last_seq:
+            new_game_output = True
         
         else:
-            new_round_output = self.new_round
+            new_game_output = False
 
-        with open(f"getitem_maindata.txt", "a") as f: 
-            f.write(f"{x_main_data.size()} from file: {self.curr_csv_pth}\n\n")
+        # with open(f"getitem_maindata.txt", "a") as f: 
+        #     f.write(f"{x_main_data.size()} from file: {self.curr_csv_pth}\n\n")
 
-        return self.target_for_round, new_round_output, x_main_data, x_prim_data_weap, x_sec_data_weap
+        return self.target_for_round, new_game_output, x_main_data, x_prim_data_weap, x_sec_data_weap
     
     def __len__(self):
         return self.total_len 
@@ -382,6 +403,9 @@ def split_dataset(percent, demo_root="../game_demos/preprocessed"):
         while split_game_num == i_game_num:
             i_game_num = int(lines[split_idx].split("de_mirage_")[1].split("_round")[0])
             split_idx+=1
+
+    except IndexError: # Index error doesnt break anything catch and pass
+        pass
     except Exception as e: 
         print(f"Most likely due to de_mirage not being map used, Error: {e}")
 

@@ -10,6 +10,7 @@ from tqdm import tqdm
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 import os
+from torchsummary import summary
 
 
 from dataset import CS2PredictionDataset, split_dataset
@@ -25,20 +26,35 @@ class ModelTrainer():
 
     def __init__(self):
 
-        self.total_epochs = 100 
+        self.total_epochs = 120
 
-        self.batch_size = 128
+        self.batch_size = 64
 
-        self.seq_len = 60
+        self.seq_len = 120
 
+        self.n_hidden = 256
+        self.n_layers = 3
 
+        self.batch_interval = 3 # Detach every 3 batches
 
-        self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=256,n_layers=2)
+        self.model = CS2LSTM(n_feature=None, out_feature=1,n_hidden=self.n_hidden,n_layers=self.n_layers)
 
         self.hidden = self.model.init_hidden(self.batch_size)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        self.log_dir = os.path.join('logs', datetime.now().strftime('%B%d_%H_%M_%S'))
+
+        try:
+            os.mkdir(self.log_dir)
+            print(f"Log Directory '{self.log_dir}' created successfully.")
+        except FileExistsError:
+            print(f"Directory '{self.log_dir}' already exists.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        writer_pth = os.path.join(self.log_dir, "tb_logs")
+        self.writer = SummaryWriter(writer_pth)
 
         if torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs!")
@@ -48,8 +64,22 @@ class ModelTrainer():
 
         self.model.to(self.device)  # Move model to GPUs
 
+        print(self.model)
 
+        # self.lossFunc = nn.L1Loss()
         self.lossFunc = nn.BCEWithLogitsLoss()
+
+        print(self.lossFunc)
+
+        with open(os.path.join(self.log_dir,"config.txt"), "a") as f:
+                        f.write(f"{self.model}\n\n")
+                        f.write(f"{self.seq_len}\n")
+                        f.write(f"{self.n_hidden}\n")
+                        f.write(f"{self.n_layers}\n\n")
+                        f.write(f"{self.lossFunc}\n\n")
+                        f.write(f"{self.batch_size}\n")
+                        
+
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
         self.split_dataset = False
@@ -77,25 +107,13 @@ class ModelTrainer():
                                      drop_last=True
                                      )
 
-        self.log_dir = os.path.join('logs', datetime.now().strftime('%B%d_%H_%M_%S'))
-
-        try:
-            os.mkdir(self.log_dir)
-            print(f"Log Directory '{self.log_dir}' created successfully.")
-        except FileExistsError:
-            print(f"Directory '{self.log_dir}' already exists.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-
-        writer_pth = os.path.join(self.log_dir, "tb_logs")
-        self.writer = SummaryWriter(writer_pth)
 
     def log_scalars(self, global_tag, metric_dict, global_step):
 
         for tag, value in metric_dict.items():
             self.writer.add_scalar(f"{global_tag}/{tag}", value, global_step)
 
-    def train(self, epoch): #loss function and optimizer should be prebuilt functions
+    def train(self, epoch, prof=None): #loss function and optimizer should be prebuilt functions
 
         self.model.train() #inherited function from model.py, sets model in training modes
 
@@ -143,6 +161,9 @@ class ModelTrainer():
                 # with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
                 #     f.write(f"Output:{out}\n\n")
 
+                # Convert out to probabilities
+                out = torch.sigmoid(out)
+
                 # sets prediction depending on whether is above of below 0.5 thresh
                 binary_preds = (out > 0.5).int()  # Converts to 0 or 1
 
@@ -156,17 +177,23 @@ class ModelTrainer():
 
                 accuracy = ((binary_preds == target).int().sum() / len(target)) * 100
 
-                running_acc += accuracy
+                running_acc += accuracy.item()
                 running_loss += loss.item()
 
-                # if True in new_round:
-                #     hidden = self.model.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
-                # else: 
-                self.hidden = (self.hidden[0].detach(), self.hidden[1].detach()) # detach if maintaining to next batch
+                if True in new_round: # Detach if new round or batch interval met
+                    self.hidden = self.model.init_hidden(self.batch_size) # reset hidden state on new match occurance TODO 
+                else: 
+                    self.hidden = (self.hidden[0].detach(), self.hidden[1].detach()) # detach if maintaining
+
+                # with open(os.path.join(self.log_dir,"new_round.txt"), "a") as f:
+                #         f.write(f"[Batch {batch_idx}] New Round:{new_round}\n\n")
+
 
                 total += self.batch_size # TODO: delete
 
-                tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
+                # prof.step()
+
+                tepoch.set_postfix(loss=loss.item(), accuracy=accuracy.item(), refresh=True)
 
                 # metric_dict["batch_loss"] = 
                 # metric_dict["batch_acc"] = running_acc / total
@@ -174,8 +201,8 @@ class ModelTrainer():
                 # self.log_scalars("train", metric_dict, epoch)
 
 
-            metric_dict["loss"] = running_loss / len(self.train_loader)
-            metric_dict["acc"] = correct / (self.batch_size * len(self.train_loader))
+            metric_dict["loss"] = running_loss / len(self.train_loader) # Divides by number of batches
+            metric_dict["acc"] = correct / total
 
             self.log_scalars("train", metric_dict, epoch)
 
@@ -183,7 +210,7 @@ class ModelTrainer():
         
 
 
-    def test(self, epoch):
+    def test(self, epoch, prof=None):
 
         # batches = len(self.testing_data)
         # hidden = self.model.hidden_init() #initialize hidden variable
@@ -221,19 +248,25 @@ class ModelTrainer():
 
                     loss = self.lossFunc(out, target.float())
 
-                    with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
-                        f.write(f"Output:{out}\n\n")
+                    # with open(os.path.join(self.log_dir,"test_raw_preds.txt"), "a") as f:
+                    #     f.write(f"Output:{out}\n\n")
 
                     # self.optimizer.zero_grad() #zeros grad from previous run
                     # loss.backward() #uses chain rule to calculate gradient of loss (rate of change of loss)
                     # self.optimizer.step()#changes weights and bias of parameters based on loss
 
+                    # Convert out to probabilities
+                    out = torch.sigmoid(out)
+
+                    # with open(os.path.join(self.log_dir,"test_prob_preds.txt"), "a") as f:
+                    #     f.write(f"Sigmoid Output:{out}\n\n")
+
                     # sets prediction depending on whether is above of below 0.5 thresh
                     binary_preds = (out > 0.5).int()  # Converts to 0 or 1
 
-                    with open(os.path.join(self.log_dir,"preds.txt"), "a") as f:
+                    with open(os.path.join(self.log_dir,"test_preds.txt"), "a") as f:
                         f.write(f"Binary Targets:{target}\n")
-                        f.write(f"Binary Preds:{binary_preds}\n\n")
+                        f.write(f"Prob Preds:{out}\n\n")
 
                     # Compute accuracy
                     correct += (binary_preds == target).int().sum()
@@ -242,19 +275,21 @@ class ModelTrainer():
 
                     running_loss += loss.item()
 
-                    # if True in new_round:
-                    #     hidden = self.model.init_hidden(self.batch_size) # reset hidden state on new round occurance TODO currently doesn reset everyround due to batching, prob need to do in model forward
-                    # else: 
-                    self.hidden = (self.hidden[0].detach(), self.hidden[1].detach()) # detach if maintaining to next batch
+                    if True in new_round: # Detach if new round or batch interval met
+                        self.hidden = self.model.init_hidden(self.batch_size) # reset hidden state on new match occurance TODO 
+                    else: 
+                        self.hidden = (self.hidden[0].detach(), self.hidden[1].detach()) # detach if maintaining
 
                     total += self.batch_size # TODO: delete
+
+                    # prof.step()
 
                     tepoch.set_postfix(loss=loss.item(), accuracy=accuracy, refresh=True)
 
 
 
-                metric_dict["loss"] = running_loss / len(self.test_loader)
-                metric_dict["acc"] = correct / (self.batch_size * len(self.test_loader))
+                metric_dict["loss"] = running_loss / len(self.test_loader) # Divides by number of batches
+                metric_dict["acc"] = correct / total
 
                 self.log_scalars("test", metric_dict, epoch)
 
@@ -263,6 +298,24 @@ class ModelTrainer():
 
         # final_loss = loss/batches
         # print("Final Lost in Test:", final_loss)
+
+    # def train_model(self):
+    #         with torch.profiler.profile(
+    #         schedule=torch.profiler.schedule(wait=0, warmup=0, active=3, repeat=1),  
+    #         on_trace_ready=torch.profiler.tensorboard_trace_handler(os.path.join(self.log_dir,'profiler')),
+    #         record_shapes=True,
+    #         profile_memory=True,
+    #         with_stack=True
+    #         ) as prof:
+    #             for epoch in range(self.total_epochs):
+    #             #for step, batch_data in enumerate(train_loader):
+    #                 print("Step is being executed")
+    #                 prof.step()  # Need to call this at each step to notify profiler of steps' boundary.
+    #                 #if step >= 1 + 1 + 3:
+    #                 #    break
+    #                 self.train(epoch, prof)
+    #                 self.test(epoch, prof)
+
 
 
     def train_model(self):
